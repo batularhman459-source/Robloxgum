@@ -9,7 +9,6 @@ max = 34                # cap from chaining moves
 flowGrace = 1.2         # seconds after the last move before speed starts falling back
 decayPerSecond = 6      # how fast speed falls back towards base after flowGrace
 bonkFactor = 0.55       # running straight into a wall keeps this share of speed
-standStillSpeed = 0     # speed when the player lets go of the stick (no forced movement)
 
 [gain]
 # Speed added when a move is done (up to speed.max). Repeating the SAME move in a row gains less:
@@ -37,10 +36,12 @@ cooldown = 0.4
 [wallRun]
 minSpeed = 16           # need at least this speed to start
 maxDuration = 1.2       # then you drop off
-gravityFactor = 0.25    # gravity while wall running, share of normal
+gravityFactor = 0.1     # gravity while wall running, share of normal (0.25 hit the floor after 0.5 s)
+entryUpSpeed = 6        # upward speed is capped to this when a wall run starts (no launching up the wall)
+maxSlideDownSpeed = 8   # falling speed along the wall never gets faster than this
 reach = 2.5             # wall must be this close to the body side
 maxAngle = 50           # degrees between run direction and the wall
-minHeight = 2.5         # must be at least this far above the ground to start
+minHeight = 3.5         # must be at least this far above the ground to start (2.5 started too low)
 sameWallCooldown = 0.6  # can't restart on the same wall right after leaving it
 
 [wallJump]
@@ -66,7 +67,7 @@ speed = "game rule: starting values, base above Roblox default 16 because auto-s
 gain = "game rule: starting values"
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
 slide = "game rule: starting values"
-wallRun = "game rule: starting values"
+wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
 wallJump = "game rule: starting values"
 vault = "game rule: starting values"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"

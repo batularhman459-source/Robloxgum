@@ -105,3 +105,12 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   a 16.7 s "walk" that really took 1.5 s.
 - FPS reads ~15 when Studio is in the background (Roblox throttles it): not a real problem.
 - `rbxassetid://203785492 Asset type does not match` warnings come from Roblox/avatar, not our code.
+- Parkour moves: build `DevTools.ParkourLane` (Edit), then in play `DevTools.ParkourRecorder` (require it
+  WITHOUT :Clone() so start/stop share state) + `user_keyboard_input` holding W and pressing Space / C.
+  It drives the real controller like a player; read moves, speeds and heights from the report.
+- Track moves with the ParkourMoveCount attribute, not the move name: two hard landings in a row
+  have the same name and looked like "nothing happened".
+- Humanoid.WalkSpeed = 0 makes MoveDirection read zero: never use it to mean "standing still".
+- Wall-run tuning came from measuring: keeping the jump's upward speed climbed over a 14 stud wall;
+  gravity 0.25 hit the floor after 0.5 s. Measure first, then change the rule number with a note.
+- Keyboard timing through the tool jitters by ~0.1 s: give timing-window tests (rolls) some slack.
