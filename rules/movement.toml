@@ -1,0 +1,27 @@
+# Player movement. The map checks compute every reach, jump and fall from these numbers.
+# Each value has its source in [source]. If the game changes a value in code, change it here too.
+
+walkSpeed = 16          # studs per second
+jumpHeight = 7.2        # studs, peak of a standing jump
+gravity = 196.2         # studs per second squared
+maxSlopeAngle = 89      # degrees, steeper surfaces are walls
+stepHeight = 2          # studs, ledges up to this are walked up without jumping
+characterHeight = 5     # studs, headroom needed to stand
+characterWidth = 2      # studs, gaps narrower than this can't be passed
+eyeHeight = 4.5         # studs above the floor, for sight lines
+jumpMargin = 0.85       # only count jumps using up to 85 % of the maximum (players aren't perfect)
+maxSafeFall = 30        # studs, longest fall the movement system handles (no fall damage/ragdoll yet)
+minCleanDrop = 4        # studs, drops between stepHeight and this are awkward stumbles
+
+[source]
+walkSpeed = "Roblox default StarterPlayer.CharacterWalkSpeed"
+jumpHeight = "Roblox default StarterPlayer.CharacterJumpHeight (UseJumpPower off)"
+gravity = "Roblox default Workspace.Gravity"
+maxSlopeAngle = "Roblox default StarterPlayer.CharacterMaxSlopeAngle"
+stepHeight = "GUESS: typical R15 auto-step; measure with the movement probe"
+characterHeight = "GUESS: default R15 avatar height ~5 studs"
+characterWidth = "GUESS: HumanoidRootPart is 2 studs wide"
+eyeHeight = "GUESS: camera focus height of a default R15 avatar"
+jumpMargin = "game rule"
+maxSafeFall = "game rule (placeholder until a fall damage or ragdoll system exists)"
+minCleanDrop = "game rule"

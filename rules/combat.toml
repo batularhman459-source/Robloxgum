@@ -1,0 +1,8 @@
+# Combat numbers. Plain numbers only: no Roblox code here.
+# Changing a number here changes the game. The tests check that the numbers make sense.
+
+baseDamage = 10        # damage of a level 1 hit
+damagePerLevel = 2     # extra damage per damage-upgrade level
+critChance = 0.1       # 0.1 = 10 %
+critMultiplier = 2     # a crit does this many times normal damage
+attackCooldown = 0.5   # seconds between attacks

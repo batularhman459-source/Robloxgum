@@ -1,0 +1,16 @@
+# Triangle budgets. A mesh over its budget is decimated; if it still doesn't fit, it is refused.
+# Each model script sets BUDGET to one of these classes.
+
+hardLimit = 20000      # Roblox MeshPart limit per mesh
+mergeDistance = 0.001  # studs, vertices closer than this are welded
+
+[budget]
+detail = 300       # bolts, small props players pass by
+prop = 1500        # crates, lamps, rocks
+large = 4000       # trees, statues, vehicles
+building = 8000    # houses, towers (per mesh; split big buildings)
+hero = 15000       # one-off centrepieces
+
+[source]
+hardLimit = "Roblox MeshPart triangle limit"
+budget = "game rule: keeps the whole map light on phones"

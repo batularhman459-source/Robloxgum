@@ -1,0 +1,41 @@
+{
+  "name": "RobloxGame",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "DevTools": {
+        "$path": "src/dev"
+      },
+      "Rules": {
+        "$path": "rules"
+      },
+      "Shared": {
+        "$path": "src/shared"
+      },
+      "UI": {
+        "$className": "Folder",
+        "Specs": {
+          "$path": "ui/specs"
+        },
+        "Themes": {
+          "$path": "ui/themes"
+        },
+        "icons": {
+          "$path": "ui/icons.toml"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}

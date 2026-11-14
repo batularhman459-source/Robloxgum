@@ -1,0 +1,12 @@
+# Upgrade costs. Plain numbers only: no Roblox code here.
+# cost(level) = baseCost * growth ^ (level - 1), rounded down
+
+[damage]
+baseCost = 50
+growth = 1.5
+maxLevel = 25
+
+[speed]
+baseCost = 100
+growth = 1.6
+maxLevel = 10

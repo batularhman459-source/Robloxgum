@@ -1,0 +1,8 @@
+# StyLua and the format gate expect LF. Keep it LF on every checkout, also on Windows.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.rbxm binary
+*.rbxl binary
+*.blend binary
+*.fbx binary

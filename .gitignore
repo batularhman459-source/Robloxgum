@@ -1,0 +1,11 @@
+build/
+ui/build/
+maps/build/
+*.rbxl
+*.rbxlx
+*.lock
+roblox.yml
+sourcemap.json
+.claude/settings.local.json
+__pycache__/
+*.pyc

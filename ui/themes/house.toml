@@ -1,0 +1,52 @@
+# House style. Every UI number lives here. Plain numbers, colors are [red, green, blue] 0-255.
+
+[depth]
+# The Depth Stack: every panel and button gets all four layers.
+strokeThickness = 3          # 4. the ONE outline thickness. Used everywhere, nothing else allowed.
+strokeColor = [17, 20, 38]
+shadowColor = [24, 32, 78]   # 1. shadow, dark and shifted towards blue
+shadowOffsetX = 0
+shadowOffsetY = 4
+shadowTransparency = 0.4
+gradientTop = 1.0            # 2. face gradient: brightness at the top...
+gradientBottom = 0.8         #    ...and at the bottom
+liftTransparency = 0.65      # 3. lift: white sheen at the very top (0 = solid white, 1 = none)
+liftHeight = 0.5             #    sheen fades out by this fraction of the height
+cornerRadius = 12
+
+[layout]
+gap = 12                # default space between items in a list
+padding = 14            # default inner padding of panels and buttons
+iconSize = 24
+minGap = 6              # checker: nothing may come closer than this (incl. outline + shadow)
+minTouch = 44           # checker: buttons at least this big (thumb size)
+minTextSize = 14        # checker: no text smaller than this
+minElement = 16         # checker: no box smaller than this
+centerSnap = 8          # checker: anything within 8 px of centre...
+centerTolerance = 1.5   # ...must be within 1.5 px of centre
+safeTop = 58            # Roblox top bar height
+minContrast = 4.5       # checker: text vs background
+minContrastLarge = 3    # same, for text at largeText size or bigger
+largeText = 18
+
+[scale]
+# The whole UI scales with the screen. Designed at scale 1 (phone and laptop).
+# scale = min(width / refWidth, safeHeight / refHeight), kept between min and max.
+refWidth = 1366
+refHeight = 710
+min = 1
+max = 1.5
+
+[text]
+font = "BuilderSans"
+size = 18
+weight = "Bold"
+
+[palette]
+panel = [34, 42, 78]
+primary = [255, 190, 40]
+success = [40, 170, 90]
+danger = [220, 60, 60]
+accent = [70, 110, 240]
+text = [255, 255, 255]
+textDark = [22, 24, 40]
