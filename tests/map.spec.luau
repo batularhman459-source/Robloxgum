@@ -46,12 +46,16 @@ end
 
 return {
 	["walking: flat floor is fully reachable and you can get back"] = function(t)
-		local s, g = build(t, { { 0, 0, 9, 9, 0 } })
+		local s, g, m = build(t, { { 0, 0, 9, 9, 0 } })
 		local a = MapGraph.analyze(g, { find(s, 0, 0, 0) })
 		t.eq(#a.traps, 0, "no traps")
 		t.eq(#a.unreachable, 0, "nothing unreachable")
 		local time = MapGraph.route(g, { find(s, 0, 0, 0) }, { [find(s, 9, 0, 0)] = true })
-		t.ok(math.abs(time - 18 / 16) < 0.01, "18 studs at 16 studs/s, got " .. tostring(time))
+		local expected = 18 / m.walkSpeed
+		t.ok(
+			math.abs(time - expected) < 0.01,
+			string.format("18 studs at %d studs/s = %.2f s, got %s", m.walkSpeed, expected, tostring(time))
+		)
 	end,
 
 	["unreachable: a ledge 10 studs up can't be reached"] = function(t)

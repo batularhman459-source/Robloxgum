@@ -50,6 +50,9 @@ Tools are pinned in rokit.toml (Rojo, Selene, StyLua, Lune). They live in ~/.rok
 - **The server is the authority.** The client asks, the server checks and decides (damage, currency,
   purchases). Validate every RemoteEvent argument on the server (type, range, rate limit).
 - Add a rules sanity check in tests/rules.spec.luau for every new rules file.
+- Tests read numbers from the rules files (`t.rules("x")`), never hard-code a rule value: two map tests
+  broke when walkSpeed went from 16 to 20 because they had 16 baked in.
+- Rules that must agree (movement.walkSpeed = parkour speed.base, rollMaxHeight = maxSafeFall) get a test.
 - DataStores: always pcall, retry with backoff, save on PlayerRemoving and BindToClose.
 
 ## UI

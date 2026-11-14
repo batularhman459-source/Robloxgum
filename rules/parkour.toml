@@ -1,0 +1,72 @@
+# Parkour movement tuning. Flowing momentum: auto-sprint at baseSpeed, chaining moves builds speed up to
+# maxSpeed, breaking the flow loses it. Distances in studs, times in seconds. Starting values: tune in
+# playtests and note the reason in [source] when you change one.
+# Jump height and gravity live in movement.toml (shared with the map checks).
+
+[speed]
+base = 20               # auto-sprint speed when not chaining
+max = 34                # cap from chaining moves
+flowGrace = 1.2         # seconds after the last move before speed starts falling back
+decayPerSecond = 6      # how fast speed falls back towards base after flowGrace
+bonkFactor = 0.55       # running straight into a wall keeps this share of speed
+standStillSpeed = 0     # speed when the player lets go of the stick (no forced movement)
+
+[gain]
+# Speed added when a move is done (up to speed.max). Repeating the SAME move in a row gains less:
+# each repeat multiplies the gain by repeatFactor, so flow means mixing moves.
+slide = 2
+wallRun = 3
+wallJump = 3
+vault = 2.5
+landRoll = 2
+doubleJump = 1
+repeatFactor = 0.5
+
+[jump]
+doubleJumpHeight = 5    # second jump in the air
+airJumps = 1            # jumps allowed in the air (double jump = 1)
+coyoteTime = 0.12       # can still jump this long after running off an edge
+jumpBuffer = 0.12       # a jump pressed this early before landing still happens
+
+[slide]
+duration = 0.7
+minSpeed = 14           # slower than this and slide does nothing
+height = 2.5            # body height while sliding (fits under gaps this low + margin)
+cooldown = 0.4
+
+[wallRun]
+minSpeed = 16           # need at least this speed to start
+maxDuration = 1.2       # then you drop off
+gravityFactor = 0.25    # gravity while wall running, share of normal
+reach = 2.5             # wall must be this close to the body side
+maxAngle = 50           # degrees between run direction and the wall
+minHeight = 2.5         # must be at least this far above the ground to start
+sameWallCooldown = 0.6  # can't restart on the same wall right after leaving it
+
+[wallJump]
+height = 6              # jump height off a wall
+push = 24               # sideways speed away from the wall
+
+[vault]
+minHeight = 1.5         # obstacle top above feet: lower than this is just stepped over
+maxHeight = 4.5         # higher than this is a wall, not a vault
+detectDistance = 4      # how far ahead an obstacle is noticed
+duration = 0.35
+minSpeed = 12
+
+[landing]
+safeHeight = 12         # falls up to this cost nothing
+rollWindow = 0.25       # press slide this long before landing to roll
+rollMaxHeight = 30      # a roll can save falls up to this (matches movement.toml maxSafeFall)
+hardSpeedFactor = 0.5   # hard landing keeps this share of speed
+hardStun = 0.35         # seconds of no control after a hard landing
+
+[source]
+speed = "game rule: starting values, base above Roblox default 16 because auto-sprint"
+gain = "game rule: starting values"
+jump = "game rule: starting values; coyote/buffer are common platformer defaults"
+slide = "game rule: starting values"
+wallRun = "game rule: starting values"
+wallJump = "game rule: starting values"
+vault = "game rule: starting values"
+landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"

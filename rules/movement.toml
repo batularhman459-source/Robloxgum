@@ -1,7 +1,7 @@
 # Player movement. The map checks compute every reach, jump and fall from these numbers.
 # Each value has its source in [source]. If the game changes a value in code, change it here too.
 
-walkSpeed = 16          # studs per second
+walkSpeed = 20          # studs per second, ground speed the map checks assume (= parkour.toml speed.base)
 jumpHeight = 7.2        # studs, peak of a standing jump
 gravity = 196.2         # studs per second squared
 maxSlopeAngle = 89      # degrees, steeper surfaces are walls
@@ -14,7 +14,7 @@ maxSafeFall = 30        # studs, longest fall the movement system handles (no fa
 minCleanDrop = 4        # studs, drops between stepHeight and this are awkward stumbles
 
 [source]
-walkSpeed = "Roblox default StarterPlayer.CharacterWalkSpeed"
+walkSpeed = "game rule: auto-sprint base speed, must equal parkour.toml speed.base (test enforces it)"
 jumpHeight = "Roblox default StarterPlayer.CharacterJumpHeight (UseJumpPower off)"
 gravity = "Roblox default Workspace.Gravity"
 maxSlopeAngle = "Roblox default StarterPlayer.CharacterMaxSlopeAngle"

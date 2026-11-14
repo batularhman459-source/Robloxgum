@@ -28,11 +28,12 @@ return {
 		t.ok(m.maxSlopeAngle > 0 and m.maxSlopeAngle < 90, "maxSlopeAngle 0..90")
 	end,
 
-	["default jump: peak 7.2, about 0.54 s in the air, about 8.7 studs far"] = function(t)
+	["default jump: peak 7.2, about 0.54 s in the air, distance = speed x air time"] = function(t)
 		local m = t.rules("movement")
 		near(t, Movement.jumpVelocity(m), 53.15, 0.01, "take-off speed")
 		near(t, Movement.jumpAirTime(m, 0) :: number, 0.5418, 0.001, "air time")
-		near(t, m.walkSpeed * (Movement.jumpAirTime(m, 0) :: number), 8.67, 0.01, "flat jump distance")
+		-- 20 studs/s auto-sprint -> about 10.8 studs (was 8.7 at Roblox's default 16)
+		near(t, m.walkSpeed * (Movement.jumpAirTime(m, 0) :: number), m.walkSpeed * 0.5418, 0.01, "flat jump distance")
 		t.eq(Movement.jumpAirTime(m, 8), nil, "can't land above the peak")
 	end,
 
