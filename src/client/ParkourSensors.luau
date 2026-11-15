@@ -118,10 +118,30 @@ function Sensors.obstacle(self: Sensors, dir: Vector3): any?
 		dir * (hit.Distance + 2),
 		self.params
 	)
+	-- Depth: step forward along the top until it drops away (or give up past maxDepth).
+	local depth = v.maxDepth + 1
+	local k = 0.6
+	while k <= v.maxDepth + 1 do
+		local probeAt = hit.Position + dir * k + Vector3.new(0, v.maxHeight + 2, 0)
+		local down = Workspace:Raycast(probeAt, Vector3.new(0, -(v.maxHeight + 2.6), 0), self.params)
+		if not down or down.Position.Y < top.Position.Y - 0.8 then
+			depth = k - 0.25
+			break
+		end
+		k += 0.5
+	end
+	-- Landing: nothing at body height between the top and the landing point.
+	local landClear = true
+	if depth <= v.maxDepth then
+		local from = top.Position + Vector3.new(0, 1.5, 0)
+		landClear = not Workspace:Raycast(from, dir * (depth + v.landDistance), self.params)
+	end
 	return {
 		topHeight = topHeight,
 		distance = hit.Distance - self.hrp.Size.Z / 2,
+		depth = depth,
 		topClear = clearUp and clearAhead,
+		landClear = landClear,
 	}
 end
 

@@ -1,0 +1,13 @@
+# Character shape. R6 bodies are wide blocks; these narrow them sideways (X only, depth and height
+# stay). 1 = Roblox default. The server applies it on spawn and moves the joints to match.
+
+torsoWidth = 0.8        # torso is 2 studs wide by default
+armWidth = 0.8          # arms 1 stud wide by default
+legWidth = 0.8          # legs 1 stud wide by default
+headWidth = 0.9         # head 2 studs wide by default (its mesh is scaled too)
+
+[source]
+torsoWidth = "designer request 2026-11-15: avatar not so bulky/wide"
+armWidth = "designer request 2026-11-15"
+legWidth = "designer request 2026-11-15"
+headWidth = "designer request 2026-11-15"

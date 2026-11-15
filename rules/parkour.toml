@@ -55,12 +55,19 @@ push = 24               # sideways speed away from the wall
 allowBurst = 1          # 1 = run speed + push may briefly go over speed.max (punchy burst), 0 = clamp to max
 
 [vault]
+# Press jump close to an obstacle to vault (no automatic vaulting). The body then follows a path over
+# it: forward through approach + obstacle + landing at the current speed, arcing up just enough to
+# clear the top, peaking over the obstacle's middle. The animation is timed to the path.
 minHeight = 1.5         # obstacle top above feet: lower than this is just stepped over
 maxHeight = 4.5         # higher than this is a wall, not a vault
-detectDistance = 4      # how far ahead an obstacle is noticed
-duration = 0.35
+maxDepth = 4            # deeper than this is a platform to jump onto, not something to vault
+detectDistance = 4      # jump within this distance of an obstacle = vault
 minSpeed = 12
 cooldown = 0.8          # no second vault right after one (playtest: the same box was vaulted twice)
+clearance = 0.5         # body (torso bottom) passes this far above the obstacle top
+landDistance = 2.5      # land this far past the obstacle's far side
+minDuration = 0.35      # the vault takes distance / speed seconds, kept inside these limits
+maxDuration = 0.6
 
 [landing]
 safeHeight = 12         # falls up to this cost nothing
@@ -76,5 +83,5 @@ jump = "game rule: starting values; coyote/buffer are common platformer defaults
 slide = "game rule: starting values; minHip/clearance/gapMargin added for the real slide (M2)"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
 wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15"
-vault = "game rule: starting values"
+vault = "game rule; press-to-vault + path (clearance, landDistance, maxDepth, durations) from the reference video 2026-11-15"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"

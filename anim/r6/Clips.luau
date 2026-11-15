@@ -15,88 +15,90 @@ Clips.Run = {
 	priority = "Movement",
 }
 
--- Vault: a SIDE (speed) vault, studied frame by frame from the reference at 30 fps (frames 7-17):
---   take-off  body turns ~70 deg left (side-on), crouches, left hand reaches down to the wall top
---   over      leans hard onto the planted left hand (~50 deg roll), legs tuck and swing over to the
---             RIGHT side, right arm flung up and out
---   down      body diagonal, unrolling over ~0.2 s, left arm swings out low, right arm high; still a
---             little tilted when the feet land, runs out of it
--- Baked into a 60 keys/s curve with follow-through (head and arms trail the body), like the Sprint.
+-- Vault: the side (speed) vault from the reference (both vaults read at 30 fps). The BODY travels on the
+-- path from Parkour.vaultOffset; this clip only poses the limbs and torso on top of it and is played
+-- at whatever speed makes it last exactly the vault's duration. Phases as a share of the clip:
+--   0.00 gather   crouch, start turning, arms opening
+--   0.28 plant    reaching the obstacle: side-on, left hand onto the top
+--   0.45 over     at the arc's peak over the middle: leaning onto the hand, legs tucked and swung
+--                 to the right, right arm flung up
+--   0.62 clear    pushing off the hand, unrolling
+--   0.85 land     low and compact, arms out (the reference lands crouched, then straightens)
+--   1.00 run-out  matches the start of the Sprint run so the hand-off is seamless
+local VAULT_LENGTH = 0.45
+local function at(u: number): number
+	return u * VAULT_LENGTH
+end
+
 Clips.Vault = {
 	loop = false,
 	priority = "Action",
-	bake = { fps = 60, lag = { head = 0.035, larm = 0.025, rarm = 0.03 } },
+	bake = { fps = 60, lag = { head = 0.03, larm = 0.02, rarm = 0.03 } },
 	keys = {
-		-- Last stride in: arms already opening wide (the reference spreads them before the wall).
 		{
-			t = 0.0,
+			t = at(0),
 			pose = {
-				root = { pitch = 14, roll = 4, yaw = -8, y = -0.12 },
-				head = { pitch = -14, yaw = 8 },
-				larm = { fwd = 30, out = 55 },
-				rarm = { fwd = -10, out = 65 },
-				rleg = { fwd = 40 },
-				lleg = { fwd = -30 },
+				root = { pitch = 22, roll = -8, yaw = -15, y = -0.25 },
+				head = { pitch = -16, yaw = 12 },
+				larm = { fwd = 45, out = 30 },
+				rarm = { fwd = -5, out = 70 },
+				rleg = { fwd = 45 },
+				lleg = { fwd = -15 },
 			},
 		},
-		-- Take-off: turning side-on to the left, crouched, left hand reaching down for the wall top.
 		{
-			t = 0.07,
+			t = at(0.28),
 			pose = {
-				root = { pitch = 30, roll = -18, yaw = -45, y = -0.3 },
-				head = { pitch = -18, yaw = 35, roll = 10 },
-				larm = { fwd = 70, out = 25 },
-				rarm = { fwd = 20, out = 95 },
-				rleg = { fwd = 65 },
-				lleg = { fwd = 55, out = 10 },
+				root = { pitch = 32, roll = -32, yaw = -55, y = 0 },
+				head = { pitch = -14, yaw = 40, roll = 15 },
+				larm = { fwd = 60, out = 10 },
+				rarm = { fwd = 25, out = 105 },
+				rleg = { fwd = 70, out = 25 },
+				lleg = { fwd = 50, out = 5 },
 			},
 		},
-		-- Over: side-on, leaning onto the planted left hand, legs tucked and swung to the right.
 		{
-			t = 0.17,
+			t = at(0.45),
 			pose = {
-				root = { pitch = 25, roll = -50, yaw = -70, y = 0.25 },
-				head = { pitch = -10, yaw = 55, roll = 30 },
-				larm = { fwd = 15, out = 10 }, -- straight down onto the wall
+				root = { pitch = 22, roll = -50, yaw = -72, y = 0 },
+				head = { pitch = -8, yaw = 55, roll = 28 },
+				larm = { fwd = 10, out = 8 }, -- straight down: the body's weight is on this hand
 				rarm = { fwd = 10, out = 125 },
 				rleg = { fwd = 95, out = 55 },
-				lleg = { fwd = 80, out = 25 },
+				lleg = { fwd = 80, out = -18 }, -- crossing towards the right with the other leg
 			},
 		},
-		-- Legs passing over, body starting to unroll.
 		{
-			t = 0.25,
+			t = at(0.62),
 			pose = {
-				root = { pitch = 18, roll = -28, yaw = -40, y = 0.15 },
-				head = { pitch = -12, yaw = 30, roll = 18 },
-				larm = { fwd = -15, out = 50 },
-				rarm = { fwd = 15, out = 115 },
-				rleg = { fwd = 55, out = 30 },
-				lleg = { fwd = 25, out = 15 },
+				root = { pitch = 18, roll = -25, yaw = -40, y = 0 },
+				head = { pitch = -12, yaw = 30, roll = 15 },
+				larm = { fwd = -20, out = 50 },
+				rarm = { fwd = 15, out = 110 },
+				rleg = { fwd = 55, out = 25 },
+				lleg = { fwd = 30 },
 			},
 		},
-		-- Coming down diagonal: left arm swinging out low, right arm high, right leg reaching for the ground.
 		{
-			t = 0.35,
+			t = at(0.85),
 			pose = {
-				root = { pitch = 14, roll = 18, yaw = -12, y = -0.05 },
-				head = { pitch = -14, yaw = 10, roll = -10 },
-				larm = { fwd = -20, out = 75 },
-				rarm = { fwd = 20, out = 95 },
-				rleg = { fwd = 30, out = 8 },
-				lleg = { fwd = -20 },
+				root = { pitch = 30, roll = 10, yaw = -12, y = -0.4 },
+				head = { pitch = -20, yaw = 10 },
+				larm = { fwd = -10, out = 70 },
+				rarm = { fwd = 20, out = 80 },
+				rleg = { fwd = 55 },
+				lleg = { fwd = -5 },
 			},
 		},
-		-- Land and run out of it (matches the start of the Sprint's stride: arms wide, slight tilt left).
 		{
-			t = 0.47,
+			t = at(1),
 			pose = {
-				root = { pitch = 14, roll = 5, yaw = -12, y = -0.12 },
-				head = { pitch = -15, yaw = 12 },
-				larm = { fwd = -25, out = 40 },
-				rarm = { fwd = 30, out = 45 },
-				rleg = { fwd = -40 },
-				lleg = { fwd = 50 },
+				root = { pitch = 15, roll = 5, yaw = -17, y = -0.12 },
+				head = { pitch = -16, yaw = 16 },
+				larm = { fwd = -30, out = 22 },
+				rarm = { fwd = 35, out = 30 },
+				rleg = { fwd = -50 },
+				lleg = { fwd = 60 },
 			},
 		},
 	},

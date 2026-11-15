@@ -135,5 +135,11 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   with follow-through lag on head and arms. Study clips with `lune run tools/anim_dump <rbxm>`.
 - Study a reference video at its real frame rate (ffmpeg fps=30, cropped, tiled): at 4 fps the
   speed vault looked like a forward dive; at 30 fps it was clearly a sideways vault onto one hand.
+- Moving a character along a scripted path (vault): Humanoid in the Physics state, CFrame set every
+  Heartbeat, ALL body parts out of world collision. In Physics the Humanoid turns collision on for
+  arms and legs and physics pushed them up out of the box by 1.8 studs per step. Diagnose with
+  PreSimulation vs PostSimulation positions: pre = where you put it, post = where physics moved it.
+- One Space press also triggers the Humanoid's own jump: set Jump = false and disable the Jumping
+  state while a scripted move uses the jump button.
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.

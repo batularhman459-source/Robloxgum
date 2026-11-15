@@ -26,15 +26,6 @@ local function onCharacter(char: Model)
 	local hrp = char:WaitForChild("HumanoidRootPart") :: BasePart
 	local sensors = Sensors.new(char, hrp, hum, p)
 	local anims = ParkourAnims.new(hum)
-	-- One-shot clip per move; wall run and slide hold are looped and stopped elsewhere.
-	local MOVE_ANIM = {
-		vault = "Vault",
-		wallJump = "WallJump",
-		doubleJump = "DoubleJump",
-		landRoll = "LandRoll",
-		hardLanding = "HardLanding",
-		slide = "SlideIn",
-	}
 	local s = Parkour.newState(p)
 
 	hum.UseJumpPower = false
@@ -74,17 +65,22 @@ local function onCharacter(char: Model)
 				part.CollisionGroup = if on then "SlideBody" else "Default"
 			end
 		end
-		if on then
-			anims:play("SlideHold", 0.15) -- holds the slide pose for as long as the body stays low
-		else
-			anims:stop("SlideHold")
-			anims:stop("SlideIn")
-		end
 	end
 	local lastJumpAt = 0
 	local bufferedJumpAt: number? = nil
-	local vaultUntil = 0
-	local lastVaultLog = 0
+
+	-- Vault: the body follows Parkour.vaultOffset over the obstacle while the Vault clip plays, timed
+	-- to the same duration. Colliding parts leave world collision for the vault (the path is measured
+	-- to clear the obstacle), and the Humanoid is put in its Physics state so it can't fight the path.
+	local vault: any = nil
+	-- ALL body parts: in the Physics state the Humanoid turns collision on for arms and legs too, and
+	-- they got pushed up out of the box by up to 1.8 studs each physics step (measured 2026-11-15).
+	local collidingParts: { BasePart } = {}
+	for _, part in char:GetChildren() do
+		if part:IsA("BasePart") then
+			table.insert(collidingParts, part)
+		end
+	end
 
 	local moveCount = 0
 	local logMoves = RunService:IsStudio() -- Studio only: the Output log survives stopping Play
@@ -95,10 +91,6 @@ local function onCharacter(char: Model)
 		if logMoves then
 			print(string.format("[Parkour] %s speed=%.1f", name, s.speed))
 		end
-		local clip = MOVE_ANIM[name]
-		if clip then
-			anims:play(clip)
-		end
 	end
 
 	local function stopWallRun()
@@ -106,24 +98,90 @@ local function onCharacter(char: Model)
 			s.wallRunning = false
 			s.sinceLeftWall = 0
 		end
-		anims:stop("WallRunL")
-		anims:stop("WallRunR")
 		char:SetAttribute("ParkourWallRun", false)
+	end
+
+	local function startVault(dir: Vector3, ob: any)
+		local plan = Parkour.vaultPlan(p, s, ob, sensors:legLength())
+		vault = { t0 = os.clock(), plan = plan, start = hrp.Position, dir = dir }
+		if logMoves then
+			print(
+				string.format(
+					"[Parkour] vault plan: obstacle top %.2f, %.2f away, depth %.2f, legs %.2f -> distance %.2f, rise %.2f, peakAt %.2f, %.2fs",
+					ob.topHeight,
+					ob.distance,
+					ob.depth,
+					sensors:legLength(),
+					plan.distance,
+					plan.rise,
+					plan.peakAt,
+					plan.duration
+				)
+			)
+		end
+		s.sinceVault = 0
+		Parkour.applyMove(p, s, "vault")
+		for _, part in collidingParts do
+			part.CollisionGroup = "SlideBody"
+		end
+		-- The same Space press also asks the Humanoid for its own jump: cancel it and block jumping
+		-- for the vault (playtest: the body went +3.4 up where the path only rises 1.5).
+		hum.Jump = false
+		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+		hum:ChangeState(Enum.HumanoidStateType.Physics)
+		anims:stop("Run", 0.05)
+		anims:play("Vault", 0.05)
+		anims:setSpeed("Vault", anims:length("Vault", plan.duration) / plan.duration)
+		setMove("vault")
+	end
+
+	local function endVault()
+		for _, part in collidingParts do
+			part.CollisionGroup = "Default"
+		end
+		local dir = vault.dir
+		vault = nil
+		hum.Jump = false
+		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+		hum:ChangeState(Enum.HumanoidStateType.Freefall)
+		hrp.AssemblyLinearVelocity = dir * s.speed
 	end
 
 	local jumpConn = UserInputService.JumpRequest:Connect(function()
 		local now = os.clock()
-		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil then
+		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vault then
 			return
 		end
-		local kind = Parkour.jumpKind(p, s)
+		-- Vault check: an obstacle close ahead (only on the ground; vaulting is never automatic).
+		local vaultReady, vaultDir, vaultOb = false, Vector3.zero, nil
+		if s.grounded then
+			local md = Sensors.flat(hum.MoveDirection)
+			vaultDir = if md.Magnitude > 0.1 then md else Sensors.flat(hrp.CFrame.LookVector)
+			vaultOb = sensors:obstacle(vaultDir)
+			local ok, why = Parkour.canVault(p, s, vaultOb)
+			vaultReady = ok
+			if logMoves and vaultOb and not ok then
+				print(
+					string.format(
+						"[Parkour] vault refused: %s (top %.1f, %.1f away, depth %.1f)",
+						why,
+						vaultOb.topHeight,
+						vaultOb.distance,
+						vaultOb.depth
+					)
+				)
+			end
+		end
+		local kind = Parkour.jumpKind(p, s, vaultReady)
 		if not kind then
 			bufferedJumpAt = now -- maybe we land in time
 			return
 		end
 		lastJumpAt = now
 		local v = hrp.AssemblyLinearVelocity
-		if kind == "wallJump" then
+		if kind == "vault" then
+			startVault(vaultDir, vaultOb)
+		elseif kind == "wallJump" then
 			local wall = sensors:wall(wallSide)
 			local normal = if wall
 				then wall.normal
@@ -167,6 +225,21 @@ local function onCharacter(char: Model)
 		s.sinceSlide += dt
 		s.sinceVault += dt
 		s.sinceLeftWall += dt
+
+		-- During a vault the body follows the planned path; nothing else runs.
+		if vault then
+			local t = (now - vault.t0) / vault.plan.duration
+			if t >= 1 then
+				endVault()
+			else
+				local fwd, up = Parkour.vaultOffset(vault.plan, t)
+				local pos = vault.start + vault.dir * fwd + Vector3.new(0, up, 0)
+				hrp.CFrame = CFrame.lookAt(pos, pos + vault.dir)
+				hrp.AssemblyLinearVelocity = vault.dir * (vault.plan.distance / vault.plan.duration)
+				char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
+				return
+			end
+		end
 		s.heightAboveGround = if grounded then 0 else sensors:heightAboveGround()
 
 		-- Air time and landings.
@@ -230,7 +303,6 @@ local function onCharacter(char: Model)
 				Parkour.applyMove(p, s, "wallRun")
 				char:SetAttribute("ParkourWallRun", true)
 				setMove("wallRun")
-				anims:play(if wallSide > 0 then "WallRunR" else "WallRunL")
 			end
 		end
 
@@ -249,35 +321,9 @@ local function onCharacter(char: Model)
 					print(string.format("[Parkour] slide refused (speed %.1f, cooldown %.2fs)", s.speed, s.sinceSlide))
 				end
 			end
-			if moving and now >= vaultUntil and now >= slideUntil then
-				local ob = sensors:obstacle(moveDir)
-				local canVault, why = Parkour.canVault(p, s, ob)
-				if logMoves and ob and not canVault and now - lastVaultLog > 0.5 then
-					lastVaultLog = now
-					print(
-						string.format(
-							"[Parkour] vault refused: %s (top %.1f studs, %.1f away)",
-							why,
-							ob.topHeight,
-							ob.distance
-						)
-					)
-				end
-				if canVault and ob then
-					vaultUntil = now + p.vault.duration
-					s.sinceVault = 0
-					Parkour.applyMove(p, s, "vault")
-					local up = Parkour.jumpVelocity(m, ob.topHeight + 0.8)
-					-- Leave the ground state first: while "Running" the Humanoid snaps the body back to the
-					-- floor and cancels the launch (playtest: the first vault landed in front of the box).
-					-- Freefall, not Jumping: Jumping adds the Humanoid's own 7.2 stud jump (vault peaked +7).
-					hum:ChangeState(Enum.HumanoidStateType.Freefall)
-					hrp.AssemblyLinearVelocity = Vector3.new(moveDir.X * s.speed, up, moveDir.Z * s.speed)
-					setMove("vault")
-				elseif sensors:bonkWall(moveDir) and s.speed > p.speed.base + 0.5 then
-					Parkour.bonk(p, s)
-					setMove("bonk")
-				end
+			if moving and now >= slideUntil and sensors:bonkWall(moveDir) and s.speed > p.speed.base + 0.5 then
+				Parkour.bonk(p, s)
+				setMove("bonk")
 			end
 		else
 			if slideRequested and logMoves then
@@ -312,7 +358,7 @@ local function onCharacter(char: Model)
 		end
 		-- Our run cycle replaces Roblox's default run (it plays at Movement priority, above the default
 		-- Animate script) and speeds up with momentum.
-		local running = grounded and moving and not low and now >= stunUntil and now >= vaultUntil
+		local running = grounded and moving and not low and now >= stunUntil
 		if running then
 			anims:play("Run", 0.12)
 			anims:setSpeed("Run", s.speed / p.speed.base)

@@ -61,6 +61,12 @@ function ParkourAnims.setSpeed(self: Player, name: string, speed: number)
 	end
 end
 
+-- Length of a clip in seconds (fallback while it still reports 0 before loading).
+function ParkourAnims.length(self: Player, name: string, fallback: number): number
+	local t = self.tracks[name]
+	return if t and t.Length > 0 then t.Length else fallback
+end
+
 function ParkourAnims.isLoaded(self: Player): number
 	local n = 0
 	for _ in self.tracks do
