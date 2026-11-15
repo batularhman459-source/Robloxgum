@@ -1,7 +1,7 @@
 --!strict
--- R6 animation clips. EMPTY on purpose: all animations were removed on 2026-11-15 to start from
--- scratch (Roblox's default R6 animations play meanwhile). The vault movement itself is code
--- (Parkour.vaultPlan / vaultOffset) and stays.
+-- R6 animation clips. All earlier clips were removed on 2026-11-15 to start from scratch; Run is
+-- the designer's imported Evade run. Everything else still plays Roblox's defaults. The vault
+-- movement itself is code (Parkour.vaultPlan / vaultOffset).
 --
 -- How to add a clip again:
 --   Clips.Name = { loop = false, priority = "Action", bake = { fps = 60, lag = { head = 0.03 } },
@@ -11,5 +11,9 @@
 -- DevTools.AnimShowcase. Lessons from earlier attempts: .claude/skills/playtest Lessons.
 
 local Clips = {}
+
+-- The designer's run (Evade Animations pack, imported into Studio 2026-11-15; dumped and rebuilt
+-- verbatim with tools/anim_from_json). 0.65 s loop, 25 keys.
+Clips.Run = { import = "EvadeRun.rbxm", sequence = "Run", loop = true, priority = "Movement" }
 
 return Clips

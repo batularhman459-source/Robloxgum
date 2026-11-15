@@ -13,6 +13,7 @@ local p = require(Rules:WaitForChild("parkour")) :: any
 local m = require(Rules:WaitForChild("movement")) :: any
 local Parkour = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Parkour"))
 local Sensors = require(script.Parent:WaitForChild("ParkourSensors"))
+local ParkourAnims = require(script.Parent:WaitForChild("ParkourAnims"))
 local UiRuntime = require(script.Parent:WaitForChild("UiRuntime"))
 
 local player = Players.LocalPlayer
@@ -24,6 +25,7 @@ local function onCharacter(char: Model)
 	local hum = char:WaitForChild("Humanoid") :: Humanoid
 	local hrp = char:WaitForChild("HumanoidRootPart") :: BasePart
 	local sensors = Sensors.new(char, hrp, hum, p)
+	local anims = ParkourAnims.new(hum)
 	local s = Parkour.newState(p)
 
 	hum.UseJumpPower = false
@@ -127,6 +129,7 @@ local function onCharacter(char: Model)
 		hum.Jump = false
 		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 		hum:ChangeState(Enum.HumanoidStateType.Physics)
+		anims:stop("Run", 0.05)
 		-- No vault animation yet (all clips removed 2026-11-15). When one exists, play it here at the
 		-- speed that makes it last plan.duration: anims:play("Vault") + anims:setSpeed(...).
 		setMove("vault")
@@ -353,8 +356,14 @@ local function onCharacter(char: Model)
 			-- MoveDirection read zero, so the controller never saw the player start moving.)
 			hum.WalkSpeed = s.speed
 		end
-		-- No custom run clip (all clips removed 2026-11-15): Roblox's default run plays. A new run clip
-		-- would play here at Movement priority, sped up with s.speed / p.speed.base.
+		-- Run clip (the designer's Evade run, imported 2026-11-15) at Movement priority, above Roblox's
+		-- default run. It plays at 1x at the base speed and speeds up with momentum.
+		if grounded and moving and not low and now >= stunUntil then
+			anims:play("Run", 0.12)
+			anims:setSpeed("Run", s.speed / p.speed.base)
+		else
+			anims:stop("Run", 0.12)
+		end
 
 		char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
 		char:SetAttribute("ParkourSliding", now < slideUntil)

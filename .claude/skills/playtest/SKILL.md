@@ -143,3 +143,5 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   state while a scripted move uses the jump button.
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.
+- Getting a clip out of Studio: the MCP can't save files, so dump the KeyframeSequence as JSON with execute_luau and rebuild it verbatim with `lune run tools/anim_from_json` (2026-11-15, Evade run).
+- Frozen anchored clones (AnimShowcase-style, HRP at a fixed y) of a low, crouched clip look sunk into the floor; judge such a clip on the moving player before calling it broken (2026-11-15).
