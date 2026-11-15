@@ -114,3 +114,7 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
 - Wall-run tuning came from measuring: keeping the jump's upward speed climbed over a 14 stud wall;
   gravity 0.25 hit the floor after 0.5 s. Measure first, then change the rule number with a note.
 - Keyboard timing through the tool jitters by ~0.1 s: give timing-window tests (rolls) some slack.
+- Test the fix over time, not once: the first slide-spam fix still pulsed (+3.5 sawtooth every time
+  speed hit base). A 10 s simulated-play test in Lune caught it before Studio did.
+- Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
+  every move and every refusal reason in Studio, and the log survives stopping Play.

@@ -40,12 +40,17 @@ local function onCharacter(char: Model)
 	local lastJumpAt = 0
 	local bufferedJumpAt: number? = nil
 	local vaultUntil = 0
+	local lastVaultLog = 0
 
 	local moveCount = 0
+	local logMoves = RunService:IsStudio() -- Studio only: the Output log survives stopping Play
 	local function setMove(name: string)
 		moveCount += 1
 		char:SetAttribute("ParkourMove", name)
 		char:SetAttribute("ParkourMoveCount", moveCount) -- lets playtests see repeats of the same move
+		if logMoves then
+			print(string.format("[Parkour] %s speed=%.1f", name, s.speed))
+		end
 	end
 
 	local function stopWallRun()
@@ -187,11 +192,25 @@ local function onCharacter(char: Model)
 					slideDir = if moving then moveDir else Sensors.flat(hrp.CFrame.LookVector)
 					Parkour.applyMove(p, s, "slide")
 					setMove("slide")
+				elseif logMoves then
+					print(string.format("[Parkour] slide refused (speed %.1f, cooldown %.2fs)", s.speed, s.sinceSlide))
 				end
 			end
 			if moving and now >= vaultUntil and now >= slideUntil then
 				local ob = sensors:obstacle(moveDir)
-				if (Parkour.canVault(p, s, ob)) and ob then
+				local canVault, why = Parkour.canVault(p, s, ob)
+				if logMoves and ob and not canVault and now - lastVaultLog > 0.5 then
+					lastVaultLog = now
+					print(
+						string.format(
+							"[Parkour] vault refused: %s (top %.1f studs, %.1f away)",
+							why,
+							ob.topHeight,
+							ob.distance
+						)
+					)
+				end
+				if canVault and ob then
 					vaultUntil = now + p.vault.duration
 					Parkour.applyMove(p, s, "vault")
 					local up = Parkour.jumpVelocity(m, ob.topHeight + 0.8)
@@ -203,6 +222,13 @@ local function onCharacter(char: Model)
 				end
 			end
 		else
+			if slideRequested and logMoves then
+				print(
+					if grounded
+						then "[Parkour] slide refused (stunned after a hard landing)"
+						else "[Parkour] slide pressed in the air (counts as a roll press)"
+				)
+			end
 			slideRequested = false
 		end
 

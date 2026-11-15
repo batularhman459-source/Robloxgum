@@ -29,6 +29,11 @@ return {
 		t.ok(p.wallRun.minSpeed <= p.speed.base, "auto-sprint alone is fast enough to wall run")
 		t.ok(p.slide.height < m.characterHeight, "slide makes you smaller")
 		t.ok(p.landing.safeHeight < p.landing.rollMaxHeight, "safe < roll limit")
+		t.ok(p.wallJump.allowBurst == 0 or p.wallJump.allowBurst == 1, "allowBurst is a 0/1 switch")
+		t.ok(
+			p.gain.maxRefresh >= 1 and p.gain.maxRefresh == math.floor(p.gain.maxRefresh),
+			"maxRefresh whole number >= 1"
+		)
 		for name, section in p do
 			if name ~= "source" then
 				t.ok(type(p.source[name]) == "string", "[" .. name .. "] needs a source entry")
@@ -79,6 +84,61 @@ return {
 		end
 		t.eq(s.speed, p.speed.base, "back to base")
 		t.eq(s.lastMove, nil, "flow broken resets the repeat chain")
+	end,
+
+	["spam: mashing one move decays back to base (playtest bug: slide spam held 31.5)"] = function(t)
+		local p, _, s = setup(t)
+		-- 10 s of play, one slide every 0.5 s, decay ticking every 0.05 s.
+		for step = 1, 200 do
+			if step % 10 == 0 then
+				Parkour.applyMove(p, s, "slide")
+			end
+			Parkour.decay(p, s, 0.05)
+		end
+		t.ok(
+			s.speed <= p.speed.base + p.gain.slide,
+			string.format("spam should sit near base %d, got %.1f", p.speed.base, s.speed)
+		)
+	end,
+
+	["flow: mixing moves at the same pace keeps the speed up"] = function(t)
+		local p, _, s = setup(t)
+		local moves = { "slide", "vault", "wallRun", "wallJump" }
+		for step = 1, 200 do
+			if step % 10 == 0 then
+				Parkour.applyMove(p, s, moves[(step // 10) % #moves + 1])
+			end
+			Parkour.decay(p, s, 0.05)
+		end
+		t.ok(
+			s.speed >= p.speed.max - 1,
+			string.format("mixed flow should stay near max %d, got %.1f", p.speed.max, s.speed)
+		)
+	end,
+
+	["spam: a few repeats still count as flow"] = function(t)
+		local p, _, s = setup(t)
+		for _ = 1, p.gain.maxRefresh do
+			Parkour.applyMove(p, s, "slide")
+		end
+		t.eq(s.sinceLastMove, 0, "repeats up to maxRefresh refresh the flow timer")
+		s.sinceLastMove = 0.5
+		Parkour.applyMove(p, s, "slide")
+		t.eq(s.sinceLastMove, 0.5, "one more repeat does not")
+	end,
+
+	["wall jump burst: allowed with allowBurst = 1, clamped with 0"] = function(t)
+		local p, m, s = setup(t)
+		s.speed = p.speed.max
+		local h = Parkour.wallJumpVelocity(p, m, s, ALONG, WALL_LEFT.normal)
+		local burst = math.sqrt(h.x ^ 2 + h.z ^ 2)
+		t.eq(p.wallJump.allowBurst, 1, "designer chose burst on")
+		t.ok(burst > p.speed.max, "burst goes over the cap")
+		local strict = table.clone(p)
+		strict.wallJump = table.clone(p.wallJump)
+		strict.wallJump.allowBurst = 0
+		local c = Parkour.wallJumpVelocity(strict, m, s, ALONG, WALL_LEFT.normal)
+		t.ok(math.abs(math.sqrt(c.x ^ 2 + c.z ^ 2) - p.speed.max) < 1e-9, "clamped to exactly the cap")
 	end,
 
 	["jumps: ground, coyote, double, wall, and none left"] = function(t)

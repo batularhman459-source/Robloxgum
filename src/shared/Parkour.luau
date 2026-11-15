@@ -15,7 +15,8 @@ export type State = {
 	speed: number, -- current horizontal speed target
 	lastMove: string?, -- last move that gave momentum
 	repeatCount: number, -- how many times lastMove was done in a row
-	sinceLastMove: number, -- seconds since the last momentum move
+	sinceLastMove: number, -- seconds since the last move that refreshed the flow
+	sinceAnyMove: number, -- seconds since any move at all (spammed repeats included)
 	wallRunning: boolean,
 	wallRunTime: number,
 	sinceSlide: number,
@@ -42,6 +43,7 @@ function Parkour.newState(p: any): State
 		lastMove = nil,
 		repeatCount = 0,
 		sinceLastMove = math.huge,
+		sinceAnyMove = math.huge,
 		wallRunning = false,
 		wallRunTime = 0,
 		sinceSlide = math.huge,
@@ -62,6 +64,9 @@ function Parkour.gainFor(p: any, s: State, move: string): number
 	return base * p.gain.repeatFactor ^ repeats
 end
 
+-- Does a move. Gains speed (less for repeats) and keeps the flow alive, except that the same move
+-- repeated more than gain.maxRefresh times in a row no longer refreshes the flow timer: spamming one
+-- move decays back to base (playtest: slide spam held 31.5 forever).
 function Parkour.applyMove(p: any, s: State, move: string)
 	local gain = Parkour.gainFor(p, s, move)
 	s.speed = math.clamp(s.speed + gain, p.speed.base, p.speed.max)
@@ -70,16 +75,22 @@ function Parkour.applyMove(p: any, s: State, move: string)
 	else
 		s.lastMove, s.repeatCount = move, 1
 	end
-	s.sinceLastMove = 0
+	if s.repeatCount <= p.gain.maxRefresh then
+		s.sinceLastMove = 0
+	end
+	s.sinceAnyMove = 0
 end
 
--- Speed falls back towards base once the flow breaks (no move for flowGrace seconds).
+-- Speed falls back towards base once the flow breaks (no fresh move for flowGrace seconds).
+-- The repeat chain only resets after a real pause (no move at all for flowGrace), so a spammed
+-- move can't restart its full gain every time speed reaches base (that made a +3.5 sawtooth).
 function Parkour.decay(p: any, s: State, dt: number)
 	s.sinceLastMove += dt
+	s.sinceAnyMove += dt
 	if s.sinceLastMove > p.speed.flowGrace and s.speed > p.speed.base then
 		s.speed = math.max(p.speed.base, s.speed - p.speed.decayPerSecond * dt)
 	end
-	if s.sinceLastMove > p.speed.flowGrace then
+	if s.sinceAnyMove > p.speed.flowGrace then
 		s.lastMove, s.repeatCount = nil, 0
 	end
 end
@@ -155,14 +166,17 @@ function Parkour.wallRunDirection(dir: Vec2, normal: Vec2): Vec2
 end
 
 -- Launch velocity of a wall jump: up by wallJump.height, away from the wall by wallJump.push,
--- keeping the along-wall run speed. Returns horizontal {x, z} and vertical speed.
+-- keeping the along-wall run speed. With allowBurst = 0 the horizontal speed is clamped to
+-- speed.max; with 1 it may briefly go over (a punchy burst). Returns horizontal {x, z} and up speed.
 function Parkour.wallJumpVelocity(p: any, m: any, s: State, runDir: Vec2, normal: Vec2): (Vec2, number)
 	local up = math.sqrt(2 * m.gravity * p.wallJump.height)
-	return {
-		x = runDir.x * s.speed + normal.x * p.wallJump.push,
-		z = runDir.z * s.speed + normal.z * p.wallJump.push,
-	},
-		up
+	local x = runDir.x * s.speed + normal.x * p.wallJump.push
+	local z = runDir.z * s.speed + normal.z * p.wallJump.push
+	local len = math.sqrt(x * x + z * z)
+	if p.wallJump.allowBurst == 0 and len > p.speed.max then
+		x, z = x / len * p.speed.max, z / len * p.speed.max
+	end
+	return { x = x, z = z }, up
 end
 
 -- Vertical take-off speed for a jump of `height` studs.

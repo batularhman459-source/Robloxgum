@@ -20,6 +20,8 @@ vault = 2.5
 landRoll = 2
 doubleJump = 1
 repeatFactor = 0.5
+maxRefresh = 3          # the same move this many times in a row still keeps the flow alive; more
+                        # repeats stop refreshing flowGrace, so spamming one move decays back to base
 
 [jump]
 doubleJumpHeight = 5    # second jump in the air
@@ -47,6 +49,7 @@ sameWallCooldown = 0.6  # can't restart on the same wall right after leaving it
 [wallJump]
 height = 6              # jump height off a wall
 push = 24               # sideways speed away from the wall
+allowBurst = 1          # 1 = run speed + push may briefly go over speed.max (punchy burst), 0 = clamp to max
 
 [vault]
 minHeight = 1.5         # obstacle top above feet: lower than this is just stepped over
@@ -64,10 +67,10 @@ hardStun = 0.35         # seconds of no control after a hard landing
 
 [source]
 speed = "game rule: starting values, base above Roblox default 16 because auto-sprint"
-gain = "game rule: starting values"
+gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (slide spam held 31.5 forever)"
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
 slide = "game rule: starting values"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
-wallJump = "game rule: starting values"
+wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15"
 vault = "game rule: starting values"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"
