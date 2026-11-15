@@ -126,5 +126,9 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   that body leans were inverted in game.
 - After Studio restarts, the Rojo plugin is disconnected until Connect is clicked: new files simply
   don't show up. Check StarterPlayerScripts/ReplicatedStorage for them before testing.
+- R6 reports HipHeight 0 (its 2 stud legs hold it up): anything measuring "feet" from HipHeight is
+  2 studs off on R6 (the vault box read as 1 stud). Use Sensors.legLength.
+- screen_capture sometimes ignores camera_position and BillboardGui labels don't show in captures:
+  for animation checks, capture the real character mid-move (keyDown W, capture, keyUp).
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.

@@ -12,15 +12,16 @@ local AnimShowcase = {}
 AnimShowcase.BASE = Vector3.new(30, 3.2, 760)
 AnimShowcase.SPACING = 7
 -- clip, time to freeze at (its key moment)
+-- R6: run cycle at its 4 beats, then the vault at its 4 beats.
 AnimShowcase.LIST = {
-	{ "SlideHold", 0.1 },
-	{ "Vault", 0.12 },
-	{ "WallRunR", 0.0 },
-	{ "WallRunL", 0.25 },
-	{ "WallJump", 0.1 },
-	{ "DoubleJump", 0.12 },
-	{ "LandRoll", 0.15 },
-	{ "HardLanding", 0.1 },
+	{ "Run", 0.0 },
+	{ "Run", 0.1 },
+	{ "Run", 0.2 },
+	{ "Run", 0.3 },
+	{ "Vault", 0.08 },
+	{ "Vault", 0.2 },
+	{ "Vault", 0.32 },
+	{ "Vault", 0.44 },
 }
 
 function AnimShowcase.clear()
@@ -68,6 +69,21 @@ function AnimShowcase.show(): string
 				* CFrame.Angles(0, math.rad(90), 0)
 		)
 		dummy.Parent = folder
+		-- Label above each clone so screenshots identify themselves.
+		local tag = Instance.new("BillboardGui")
+		tag.Size = UDim2.fromOffset(110, 26)
+		tag.StudsOffset = Vector3.new(0, 3.2, 0)
+		tag.AlwaysOnTop = true
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.fromScale(1, 1)
+		text.BackgroundTransparency = 0.3
+		text.BackgroundColor3 = Color3.new(0, 0, 0)
+		text.TextColor3 = Color3.new(1, 1, 1)
+		text.TextScaled = true
+		text.Text = string.format("%d %s %.2f", i, item[1], item[2])
+		text.Parent = tag
+		tag.Adornee = root
+		tag.Parent = dummy
 		local a = Instance.new("Animation")
 		a.AnimationId = KeyframeSequenceProvider:RegisterKeyframeSequence(seq)
 		local track = animator:LoadAnimation(a)

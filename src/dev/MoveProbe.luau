@@ -31,11 +31,16 @@ local function settle(hum: Humanoid, hrp: BasePart, timeout: number)
 		or os.clock() - t0 > timeout
 end
 
+-- Root part height above the feet: HipHeight on R15, leg length on R6 (which reports HipHeight 0).
+local function legs(hum: Humanoid): number
+	return if hum.RigType == Enum.HumanoidRigType.R6 then 2 else hum.HipHeight
+end
+
 local function placeAt(hum: Humanoid, hrp: BasePart, floorPos: Vector3)
 	hrp.AssemblyLinearVelocity = Vector3.zero
 	hrp.CFrame = CFrame.new(
-		floorPos + Vector3.new(0, hum.HipHeight + hrp.Size.Y / 2 + 0.1, 0),
-		floorPos + Vector3.new(1, hum.HipHeight + hrp.Size.Y / 2 + 0.1, 0)
+		floorPos + Vector3.new(0, legs(hum) + hrp.Size.Y / 2 + 0.1, 0),
+		floorPos + Vector3.new(1, legs(hum) + hrp.Size.Y / 2 + 0.1, 0)
 	)
 	settle(hum, hrp, 2)
 end
@@ -140,8 +145,8 @@ function MoveProbe.run(): string
 			local t0 = os.clock()
 			repeat
 				task.wait()
-			until os.clock() - t0 > 2.5 or (hrp.Position.Y - LANE.Y) > hum.HipHeight + hrp.Size.Y / 2 + h - 0.3
-			local up = (hrp.Position.Y - LANE.Y) - (hum.HipHeight + hrp.Size.Y / 2)
+			until os.clock() - t0 > 2.5 or (hrp.Position.Y - LANE.Y) > legs(hum) + hrp.Size.Y / 2 + h - 0.3
+			local up = (hrp.Position.Y - LANE.Y) - (legs(hum) + hrp.Size.Y / 2)
 			if up >= h - 0.3 then
 				climbed = h
 			end

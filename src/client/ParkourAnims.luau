@@ -53,6 +53,14 @@ function ParkourAnims.stop(self: Player, name: string, fade: number?)
 	end
 end
 
+-- Playback speed of a playing clip (the run cycle follows the momentum speed).
+function ParkourAnims.setSpeed(self: Player, name: string, speed: number)
+	local t = self.tracks[name]
+	if t and t.IsPlaying then
+		t:AdjustSpeed(speed)
+	end
+end
+
 function ParkourAnims.isLoaded(self: Player): number
 	local n = 0
 	for _ in self.tracks do

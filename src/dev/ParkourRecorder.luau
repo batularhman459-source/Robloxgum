@@ -20,7 +20,8 @@ end
 function ParkourRecorder.place(pos: Vector3)
 	local c, hrp, hum = parts()
 	hrp.AssemblyLinearVelocity = Vector3.zero
-	local stand = pos + Vector3.new(0, hum.HipHeight + hrp.Size.Y / 2 + 0.1, 0)
+	local legs = if hum.RigType == Enum.HumanoidRigType.R6 then 2 else hum.HipHeight -- R6 reports HipHeight 0
+	local stand = pos + Vector3.new(0, legs + hrp.Size.Y / 2 + 0.1, 0)
 	hrp.CFrame = CFrame.lookAt(stand, stand + Vector3.new(1, 0, 0))
 	local cam = Workspace.CurrentCamera
 	cam.CFrame = CFrame.lookAt(stand + Vector3.new(-12, 5, 0), stand + Vector3.new(10, 0, 0))

@@ -65,9 +65,14 @@ local function onCharacter(char: Model)
 			return
 		end
 		low = on
-		hum.HipHeight = if on then lowHip else standHip
-		for _, part in upperParts do
-			part.CollisionGroup = if on then "SlideBody" else "Default"
+		-- R15 only for now: R6 ignores HipHeight (it would raise the body) and its only colliding parts
+		-- are Torso and Head, so removing them from collision would drop it through the floor. The R6
+		-- slide-under-gaps (a small low collider) is a planned rebuild.
+		if hum.RigType == Enum.HumanoidRigType.R15 then
+			hum.HipHeight = if on then lowHip else standHip
+			for _, part in upperParts do
+				part.CollisionGroup = if on then "SlideBody" else "Default"
+			end
 		end
 		if on then
 			anims:play("SlideHold", 0.15) -- holds the slide pose for as long as the body stays low
@@ -305,6 +310,16 @@ local function onCharacter(char: Model)
 			-- MoveDirection read zero, so the controller never saw the player start moving.)
 			hum.WalkSpeed = s.speed
 		end
+		-- Our run cycle replaces Roblox's default run (it plays at Movement priority, above the default
+		-- Animate script) and speeds up with momentum.
+		local running = grounded and moving and not low and now >= stunUntil and now >= vaultUntil
+		if running then
+			anims:play("Run", 0.12)
+			anims:setSpeed("Run", s.speed / p.speed.base)
+		else
+			anims:stop("Run", 0.12)
+		end
+
 		char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
 		char:SetAttribute("ParkourSliding", now < slideUntil)
 	end)

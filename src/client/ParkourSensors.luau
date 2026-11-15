@@ -31,9 +31,18 @@ local function flat(v: Vector3): Vector3
 end
 Sensors.flat = flat
 
--- Height of the feet above the ground below (large number when nothing is below).
+-- Distance from the bottom of the root part down to the feet. R15 uses HipHeight; R6 always reports
+-- HipHeight 0 because its 2 stud legs hold the body up (playtest: the vault box read as 1 stud high).
+function Sensors.legLength(self: Sensors): number
+	if self.hum.RigType == Enum.HumanoidRigType.R6 then
+		local leg = self.char:FindFirstChild("Left Leg")
+		return if leg and leg:IsA("BasePart") then leg.Size.Y else 2
+	end
+	return self.hum.HipHeight
+end
+
 function Sensors.feetY(self: Sensors): number
-	return self.hrp.Position.Y - self.hrp.Size.Y / 2 - self.hum.HipHeight
+	return self.hrp.Position.Y - self.hrp.Size.Y / 2 - self:legLength()
 end
 
 function Sensors.heightAboveGround(self: Sensors): number
