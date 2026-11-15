@@ -60,6 +60,7 @@ maxHeight = 4.5         # higher than this is a wall, not a vault
 detectDistance = 4      # how far ahead an obstacle is noticed
 duration = 0.35
 minSpeed = 12
+cooldown = 0.8          # no second vault right after one (playtest: the same box was vaulted twice)
 
 [landing]
 safeHeight = 12         # falls up to this cost nothing

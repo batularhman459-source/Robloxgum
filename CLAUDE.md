@@ -20,6 +20,9 @@ src/shared/Movement.luau  Jump/fall/walk physics from rules/movement.toml.
 src/dev/          Studio dev tools -> ReplicatedStorage.DevTools: MapProbe (9 map checks), MoveProbe
                   (real movement in play), TestCourse (map with planted flaws). Always require a :Clone().
 maps/             models/*.py (Blender model scripts), budgets.toml, STYLES.md, briefs/, reports/.
+anim/             make_specs.py (pose specs, the source of every animation), render.ps1 (Blender previews),
+                  build.ps1 (specs -> src/client/Anims.rbxm via to_roblox + Lune). Never edit Anims.rbxm.
+                  Body leans: authored X+ = forward, flipped on export (game_axes). Upload only with an OK.
 tools/            Lune tools: ui.luau (build/check), UiCheck, Preview. icon.ps1 (FLUX icons).
                   mesh.ps1 + blender/ (build, optimise, budget check, render meshes).
 tests/            Lune tests: *.spec.luau, run by tests/run.luau. tests/fixtures = test data.

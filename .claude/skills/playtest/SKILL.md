@@ -118,5 +118,13 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   speed hit base). A 10 s simulated-play test in Lune caught it before Studio did.
 - Shrinking a character: CanCollide on Head/torso doesn't stick (the Humanoid forces it back every
   frame). Lower HipHeight + put the upper body in the SlideBody collision group (server-registered).
+- Launching a character from the ground (vault): set HumanoidStateType.Freefall first. In Running
+  the Humanoid snaps it back to the floor (vault landed in front of the box); Jumping adds the
+  Humanoid's own 7.2 stud jump on top (vault peaked +7 over a 3 stud box).
+- Judge animations on the real avatar: `DevTools.AnimShowcase` freezes every clip on clones in a row
+  for one screenshot. The quick Blender previews were too small and grey to read, and they hid
+  that body leans were inverted in game.
+- After Studio restarts, the Rojo plugin is disconnected until Connect is clicked: new files simply
+  don't show up. Check StarterPlayerScripts/ReplicatedStorage for them before testing.
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.

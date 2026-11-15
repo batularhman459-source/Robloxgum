@@ -246,6 +246,10 @@ return {
 		t.eq(select(2, Parkour.canVault(p, s, ob(3, 2, false))), "no room on top")
 		s.speed = p.vault.minSpeed - 1
 		t.eq(select(2, Parkour.canVault(p, s, ob(3))), "too slow")
+		s.speed, s.sinceVault = p.speed.base, p.vault.cooldown * 0.5
+		t.eq(select(2, Parkour.canVault(p, s, ob(3))), "cooldown", "no second vault right after one")
+		s.sinceVault = p.vault.cooldown
+		t.ok((Parkour.canVault(p, s, ob(3))), "allowed again after the cooldown")
 	end,
 
 	["slide: needs ground, speed and cooldown"] = function(t)

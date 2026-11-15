@@ -1,0 +1,518 @@
+{
+ "name": "LandRoll",
+ "rbx_name": "LandRoll",
+ "priority": "Action",
+ "loop": false,
+ "fps": 30,
+ "duration": 0.45,
+ "w": 640,
+ "h": 560,
+ "margin": 1.15,
+ "plain": true,
+ "preview": false,
+ "views": {
+  "side": [
+   1.0,
+   0.0,
+   0.0
+  ],
+  "tq": [
+   0.92,
+   0.38,
+   0.14
+  ]
+ },
+ "properties": {
+  "ARM_IK_FK.L": 0.0,
+  "ARM_IK_FK.R": 0.0,
+  "LEG_IK_FK.L": 0.0,
+  "LEG_IK_FK.R": 0.0
+ },
+ "keyframes": [
+  {
+   "t": 0.0,
+   "ease": "in",
+   "bones": {
+    "TORSO": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    },
+    "UpTorso": {
+     "rot": [
+      -12,
+      0,
+      0
+     ]
+    },
+    "HEAD": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.L": {
+     "rot": [
+      -55,
+      0,
+      -10
+     ]
+    },
+    "FK_LowerArm.L": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.R": {
+     "rot": [
+      -55,
+      0,
+      10
+     ]
+    },
+    "FK_LowerArm.R": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.L": {
+     "rot": [
+      -105,
+      0,
+      -4
+     ]
+    },
+    "FK_LowerLeg.L": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.L": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.R": {
+     "rot": [
+      -105,
+      0,
+      4
+     ]
+    },
+    "FK_LowerLeg.R": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.R": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "t": 0.11,
+   "ease": "smooth",
+   "bones": {
+    "TORSO": {
+     "rot": [
+      -110,
+      0,
+      0
+     ]
+    },
+    "UpTorso": {
+     "rot": [
+      -12,
+      0,
+      0
+     ]
+    },
+    "HEAD": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.L": {
+     "rot": [
+      -55,
+      0,
+      -10
+     ]
+    },
+    "FK_LowerArm.L": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.R": {
+     "rot": [
+      -55,
+      0,
+      10
+     ]
+    },
+    "FK_LowerArm.R": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.L": {
+     "rot": [
+      -105,
+      0,
+      -4
+     ]
+    },
+    "FK_LowerLeg.L": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.L": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.R": {
+     "rot": [
+      -105,
+      0,
+      4
+     ]
+    },
+    "FK_LowerLeg.R": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.R": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "t": 0.22,
+   "ease": "smooth",
+   "bones": {
+    "TORSO": {
+     "rot": [
+      -200,
+      0,
+      0
+     ]
+    },
+    "UpTorso": {
+     "rot": [
+      -12,
+      0,
+      0
+     ]
+    },
+    "HEAD": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.L": {
+     "rot": [
+      -55,
+      0,
+      -10
+     ]
+    },
+    "FK_LowerArm.L": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.R": {
+     "rot": [
+      -55,
+      0,
+      10
+     ]
+    },
+    "FK_LowerArm.R": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.L": {
+     "rot": [
+      -105,
+      0,
+      -4
+     ]
+    },
+    "FK_LowerLeg.L": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.L": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.R": {
+     "rot": [
+      -105,
+      0,
+      4
+     ]
+    },
+    "FK_LowerLeg.R": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.R": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "t": 0.33,
+   "ease": "smooth",
+   "bones": {
+    "TORSO": {
+     "rot": [
+      -290,
+      0,
+      0
+     ]
+    },
+    "UpTorso": {
+     "rot": [
+      -12,
+      0,
+      0
+     ]
+    },
+    "HEAD": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.L": {
+     "rot": [
+      -55,
+      0,
+      -10
+     ]
+    },
+    "FK_LowerArm.L": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.R": {
+     "rot": [
+      -55,
+      0,
+      10
+     ]
+    },
+    "FK_LowerArm.R": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.L": {
+     "rot": [
+      -105,
+      0,
+      -4
+     ]
+    },
+    "FK_LowerLeg.L": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.L": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.R": {
+     "rot": [
+      -105,
+      0,
+      4
+     ]
+    },
+    "FK_LowerLeg.R": {
+     "rot": [
+      125,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.R": {
+     "rot": [
+      -20,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  {
+   "t": 0.45,
+   "ease": "out",
+   "bones": {
+    "TORSO": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "UpTorso": {
+     "rot": [
+      -14,
+      0,
+      0
+     ]
+    },
+    "HEAD": {
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.L": {
+     "rot": [
+      -55,
+      0,
+      -8
+     ]
+    },
+    "FK_LowerArm.L": {
+     "rot": [
+      -70,
+      0,
+      0
+     ]
+    },
+    "FK_UpperArm.R": {
+     "rot": [
+      40,
+      0,
+      8
+     ]
+    },
+    "FK_LowerArm.R": {
+     "rot": [
+      -45,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.L": {
+     "rot": [
+      35,
+      0,
+      0
+     ]
+    },
+    "FK_LowerLeg.L": {
+     "rot": [
+      80,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.L": {
+     "rot": [
+      10,
+      0,
+      0
+     ]
+    },
+    "FK_UpperLeg.R": {
+     "rot": [
+      -55,
+      0,
+      0
+     ]
+    },
+    "FK_LowerLeg.R": {
+     "rot": [
+      25,
+      0,
+      0
+     ]
+    },
+    "FK_Foot.R": {
+     "rot": [
+      -10,
+      0,
+      0
+     ]
+    }
+   }
+  }
+ ]
+}

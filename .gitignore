@@ -9,3 +9,4 @@ sourcemap.json
 .claude/settings.local.json
 __pycache__/
 *.pyc
+anim/build/

@@ -13,6 +13,7 @@ local p = require(Rules:WaitForChild("parkour")) :: any
 local m = require(Rules:WaitForChild("movement")) :: any
 local Parkour = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Parkour"))
 local Sensors = require(script.Parent:WaitForChild("ParkourSensors"))
+local ParkourAnims = require(script.Parent:WaitForChild("ParkourAnims"))
 local UiRuntime = require(script.Parent:WaitForChild("UiRuntime"))
 
 local player = Players.LocalPlayer
@@ -24,6 +25,16 @@ local function onCharacter(char: Model)
 	local hum = char:WaitForChild("Humanoid") :: Humanoid
 	local hrp = char:WaitForChild("HumanoidRootPart") :: BasePart
 	local sensors = Sensors.new(char, hrp, hum, p)
+	local anims = ParkourAnims.new(hum)
+	-- One-shot clip per move; wall run and slide hold are looped and stopped elsewhere.
+	local MOVE_ANIM = {
+		vault = "Vault",
+		wallJump = "WallJump",
+		doubleJump = "DoubleJump",
+		landRoll = "LandRoll",
+		hardLanding = "HardLanding",
+		slide = "SlideIn",
+	}
 	local s = Parkour.newState(p)
 
 	hum.UseJumpPower = false
@@ -58,6 +69,12 @@ local function onCharacter(char: Model)
 		for _, part in upperParts do
 			part.CollisionGroup = if on then "SlideBody" else "Default"
 		end
+		if on then
+			anims:play("SlideHold", 0.15) -- holds the slide pose for as long as the body stays low
+		else
+			anims:stop("SlideHold")
+			anims:stop("SlideIn")
+		end
 	end
 	local lastJumpAt = 0
 	local bufferedJumpAt: number? = nil
@@ -73,6 +90,10 @@ local function onCharacter(char: Model)
 		if logMoves then
 			print(string.format("[Parkour] %s speed=%.1f", name, s.speed))
 		end
+		local clip = MOVE_ANIM[name]
+		if clip then
+			anims:play(clip)
+		end
 	end
 
 	local function stopWallRun()
@@ -80,6 +101,8 @@ local function onCharacter(char: Model)
 			s.wallRunning = false
 			s.sinceLeftWall = 0
 		end
+		anims:stop("WallRunL")
+		anims:stop("WallRunR")
 		char:SetAttribute("ParkourWallRun", false)
 	end
 
@@ -137,6 +160,7 @@ local function onCharacter(char: Model)
 		local moving = moveDir.Magnitude > 0.1
 
 		s.sinceSlide += dt
+		s.sinceVault += dt
 		s.sinceLeftWall += dt
 		s.heightAboveGround = if grounded then 0 else sensors:heightAboveGround()
 
@@ -201,6 +225,7 @@ local function onCharacter(char: Model)
 				Parkour.applyMove(p, s, "wallRun")
 				char:SetAttribute("ParkourWallRun", true)
 				setMove("wallRun")
+				anims:play(if wallSide > 0 then "WallRunR" else "WallRunL")
 			end
 		end
 
@@ -235,8 +260,13 @@ local function onCharacter(char: Model)
 				end
 				if canVault and ob then
 					vaultUntil = now + p.vault.duration
+					s.sinceVault = 0
 					Parkour.applyMove(p, s, "vault")
 					local up = Parkour.jumpVelocity(m, ob.topHeight + 0.8)
+					-- Leave the ground state first: while "Running" the Humanoid snaps the body back to the
+					-- floor and cancels the launch (playtest: the first vault landed in front of the box).
+					-- Freefall, not Jumping: Jumping adds the Humanoid's own 7.2 stud jump (vault peaked +7).
+					hum:ChangeState(Enum.HumanoidStateType.Freefall)
 					hrp.AssemblyLinearVelocity = Vector3.new(moveDir.X * s.speed, up, moveDir.Z * s.speed)
 					setMove("vault")
 				elseif sensors:bonkWall(moveDir) and s.speed > p.speed.base + 0.5 then

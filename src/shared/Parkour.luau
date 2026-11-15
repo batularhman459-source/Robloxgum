@@ -20,6 +20,7 @@ export type State = {
 	wallRunning: boolean,
 	wallRunTime: number,
 	sinceSlide: number,
+	sinceVault: number,
 	heightAboveGround: number,
 	lastWallId: string?,
 	sinceLeftWall: number,
@@ -47,6 +48,7 @@ function Parkour.newState(p: any): State
 		wallRunning = false,
 		wallRunTime = 0,
 		sinceSlide = math.huge,
+		sinceVault = math.huge,
 		heightAboveGround = 0,
 		lastWallId = nil,
 		sinceLeftWall = math.huge,
@@ -204,6 +206,9 @@ function Parkour.canVault(p: any, s: State, ob: Obstacle?): (boolean, string)
 	end
 	if s.speed < v.minSpeed then
 		return false, "too slow"
+	end
+	if s.sinceVault < v.cooldown then
+		return false, "cooldown"
 	end
 	return true, "ok"
 end
