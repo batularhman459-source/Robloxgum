@@ -130,5 +130,10 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
   2 studs off on R6 (the vault box read as 1 stud). Use Sensors.legLength.
 - screen_capture sometimes ignores camera_position and BillboardGui labels don't show in captures:
   for animation checks, capture the real character mid-move (keyDown W, capture, keyUp).
+- Animation smoothness: 5 poses with an ease each reads stiff (pose-to-pose). Good clips are dense
+  curves (the designer's Sprint: 60 keys/s, Linear). Author few poses, then bake them (R6Pose.bake)
+  with follow-through lag on head and arms. Study clips with `lune run tools/anim_dump <rbxm>`.
+- Study a reference video at its real frame rate (ffmpeg fps=30, cropped, tiled): at 4 fps the
+  speed vault looked like a forward dive; at 30 fps it was clearly a sideways vault onto one hand.
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.

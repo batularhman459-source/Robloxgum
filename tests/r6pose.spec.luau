@@ -57,6 +57,35 @@ return {
 		near(t, torsoUp({ roll = 30 }), Vector3.new(s, c, 0), "roll 30 tips the top to the right (+X)")
 	end,
 
+	["bake: the smooth curve passes exactly through every authored pose"] = function(t)
+		local Clips = require("../anim/r6/Clips")
+		local keys = Clips.Vault.keys
+		for _, k in keys do
+			for joint, axes in R6Pose.AXES do
+				for _, axis in axes do
+					local want = (k.pose[joint] and k.pose[joint][axis]) or 0
+					local got = R6Pose.sampleAxis(keys, joint, axis, k.t)
+					t.ok(
+						math.abs(got - want) < 1e-6,
+						string.format("%s.%s at %.2f: %.3f vs %.3f", joint, axis, k.t, got, want)
+					)
+				end
+			end
+		end
+	end,
+
+	["bake: 60 keys per second, lagged joints trail the body"] = function(t)
+		local keys = {
+			{ t = 0, pose = { root = { yaw = 0 }, head = { yaw = 0 } } },
+			{ t = 0.5, pose = { root = { yaw = 60 }, head = { yaw = 60 } } },
+		}
+		local baked = R6Pose.bake(keys, 60, { head = 0.05 })
+		t.eq(#baked, 31, "0.5 s at 60 fps = 30 steps + the first frame")
+		local mid = baked[16].pose
+		t.ok(mid.head.yaw < mid.root.yaw, "head trails the body mid-motion")
+		t.ok(math.abs(baked[31].pose.root.yaw - 60) < 1e-9, "ends on the authored end pose")
+	end,
+
 	["mirror swaps sides and flips roll and yaw"] = function(t)
 		local m =
 			R6Pose.mirror({ root = { roll = 7, yaw = 10, pitch = 14 }, rarm = { fwd = 60 }, lleg = { fwd = -30 } })

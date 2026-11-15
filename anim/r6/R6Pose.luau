@@ -47,6 +47,71 @@ function R6Pose.transform(CFrame: any, joint: string, a: any): any
 	return c0r:Inverse() * R6Pose.bodyTransform(CFrame, joint, a) * c0r
 end
 
+local AXES = {
+	root = { "pitch", "roll", "yaw", "y" },
+	head = { "pitch", "roll", "yaw", "y" },
+	rarm = { "fwd", "out", "twist" },
+	larm = { "fwd", "out", "twist" },
+	rleg = { "fwd", "out", "twist" },
+	lleg = { "fwd", "out", "twist" },
+}
+R6Pose.AXES = AXES
+
+-- Value of one joint axis at time t: a smooth spline through the authored keys (Hermite with
+-- finite-difference tangents, i.e. Catmull-Rom for uneven timing). Missing values count as 0.
+function R6Pose.sampleAxis(keys: any, joint: string, axis: string, t: number): number
+	local n = #keys
+	local function v(i: number): number
+		local p = keys[i].pose[joint]
+		return (p and p[axis]) or 0
+	end
+	local function time(i: number): number
+		return keys[i].t
+	end
+	if t <= time(1) then
+		return v(1)
+	elseif t >= time(n) then
+		return v(n)
+	end
+	local i = 1
+	while time(i + 1) < t do
+		i += 1
+	end
+	local function tangent(k: number): number
+		local a, b = math.max(k - 1, 1), math.min(k + 1, n)
+		return (v(b) - v(a)) / (time(b) - time(a))
+	end
+	local h = time(i + 1) - time(i)
+	local s = (t - time(i)) / h
+	local s2, s3 = s * s, s * s * s
+	return (2 * s3 - 3 * s2 + 1) * v(i)
+		+ (s3 - 2 * s2 + s) * h * tangent(i)
+		+ (-2 * s3 + 3 * s2) * v(i + 1)
+		+ (s3 - s2) * h * tangent(i + 1)
+end
+
+-- Bakes authored keys into dense keys (fps per second) so the clip plays as one smooth curve
+-- instead of pose-to-pose. lag[joint] = seconds that joint trails behind (follow-through).
+function R6Pose.bake(keys: any, fps: number, lag: { [string]: number }?): any
+	local duration = keys[#keys].t
+	local frames = math.max(1, math.floor(duration * fps + 0.5))
+	local out = {}
+	for f = 0, frames do
+		local t = duration * f / frames
+		local pose = {}
+		for joint, axes in AXES do
+			local tt = math.clamp(t - ((lag and lag[joint]) or 0), 0, duration)
+			local a = {}
+			for _, axis in axes do
+				a[axis] = R6Pose.sampleAxis(keys, joint, axis, tt)
+			end
+			pose[joint] = a
+		end
+		table.insert(out, { t = t, pose = pose })
+	end
+	return out
+end
+
 -- Mirror a pose left <-> right (for the second half of a run cycle).
 function R6Pose.mirror(pose: any): any
 	local function copy(t: any): any
