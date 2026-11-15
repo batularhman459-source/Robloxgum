@@ -257,6 +257,17 @@ return {
 		t.ok(not Parkour.canSlide(p, s), "not in the air")
 	end,
 
+	["real slide: body fits under slide.height, stays low under ceilings"] = function(t)
+		local p, m = setup(t)
+		local rootHeight = 2 -- R15 HumanoidRootPart
+		local hip = Parkour.slideHipHeight(p, rootHeight)
+		t.ok(hip + rootHeight <= p.slide.height, "sliding body top must be under slide.height")
+		t.ok(hip >= p.slide.minHip, "never below minHip")
+		t.ok(not Parkour.canStandUp(m, p.slide.height + p.slide.gapMargin), "under a slide gap you stay low")
+		t.ok(Parkour.canStandUp(m, m.characterHeight), "full headroom: stand up")
+		t.ok(p.slide.height + p.slide.gapMargin < m.characterHeight, "a slide gap is lower than a standing body")
+	end,
+
 	["landing: safe, rolled and hard"] = function(t)
 		local p, _, s = setup(t)
 		s.speed = 28

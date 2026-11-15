@@ -44,6 +44,22 @@ function Sensors.heightAboveGround(self: Sensors): number
 	return math.max(0, self:feetY() - hit.Position.Y)
 end
 
+-- Free space above the feet, measured up to `limit` studs (returns limit when nothing is above).
+-- Three rays (centre, front, back) so a bar the body is half under still counts.
+function Sensors.headroom(self: Sensors, limit: number?): number
+	local up = limit or 20
+	local feet = Vector3.new(self.hrp.Position.X, self:feetY() + 0.1, self.hrp.Position.Z)
+	local look = flat(self.hrp.CFrame.LookVector) * (self.hrp.Size.Z / 2)
+	local best = up
+	for _, offset in { Vector3.zero, look, -look } do
+		local hit = Workspace:Raycast(feet + offset, Vector3.new(0, up, 0), self.params)
+		if hit then
+			best = math.min(best, hit.Distance + 0.1)
+		end
+	end
+	return best
+end
+
 -- Wall on one side (side = 1 right, -1 left), as {normal, distance from the body side, id}.
 function Sensors.wall(self: Sensors, side: number): any?
 	local right = flat(self.hrp.CFrame.RightVector)

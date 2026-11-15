@@ -37,6 +37,28 @@ local function onCharacter(char: Model)
 	local stunUntil = 0
 	local slideUntil = 0
 	local slideDir = Vector3.zero
+
+	-- Real slide: hips down so the body fits under slide.height, upper body out of world collision.
+	local standHip = hum.HipHeight
+	local lowHip = Parkour.slideHipHeight(p, hrp.Size.Y)
+	local upperParts: { BasePart } = {}
+	for _, name in { "Head", "UpperTorso", "Torso" } do
+		local part = char:FindFirstChild(name)
+		if part and part:IsA("BasePart") then
+			table.insert(upperParts, part)
+		end
+	end
+	local low = false
+	local function setLow(on: boolean)
+		if on == low then
+			return
+		end
+		low = on
+		hum.HipHeight = if on then lowHip else standHip
+		for _, part in upperParts do
+			part.CollisionGroup = if on then "SlideBody" else "Default"
+		end
+	end
 	local lastJumpAt = 0
 	local bufferedJumpAt: number? = nil
 	local vaultUntil = 0
@@ -190,6 +212,7 @@ local function onCharacter(char: Model)
 					s.sinceSlide = 0
 					slideUntil = now + p.slide.duration
 					slideDir = if moving then moveDir else Sensors.flat(hrp.CFrame.LookVector)
+					setLow(true)
 					Parkour.applyMove(p, s, "slide")
 					setMove("slide")
 				elseif logMoves then
@@ -230,6 +253,15 @@ local function onCharacter(char: Model)
 				)
 			end
 			slideRequested = false
+		end
+
+		-- Slide time up: stand only where there is room, otherwise stay low and keep sliding.
+		if low and now >= slideUntil then
+			if Parkour.canStandUp(m, sensors:headroom()) then
+				setLow(false)
+			else
+				slideUntil = now + dt
+			end
 		end
 
 		-- Speed: auto-sprint at the momentum speed; stunned = stop; sliding = locked direction.

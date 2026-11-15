@@ -116,5 +116,7 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
 - Keyboard timing through the tool jitters by ~0.1 s: give timing-window tests (rolls) some slack.
 - Test the fix over time, not once: the first slide-spam fix still pulsed (+3.5 sawtooth every time
   speed hit base). A 10 s simulated-play test in Lune caught it before Studio did.
+- Shrinking a character: CanCollide on Head/torso doesn't stick (the Humanoid forces it back every
+  frame). Lower HipHeight + put the upper body in the SlideBody collision group (server-registered).
 - Ask the player to keep Output open (Fenster > Ausgabe in German Studio): the controller prints
   every move and every refusal reason in Studio, and the log survives stopping Play.

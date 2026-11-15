@@ -212,6 +212,17 @@ function Parkour.canSlide(p: any, s: State): boolean
 	return s.grounded and s.speed >= p.slide.minSpeed and s.sinceSlide >= p.slide.cooldown
 end
 
+-- Hip height while sliding, so the body (root part of height rootHeight) stays under slide.height.
+function Parkour.slideHipHeight(p: any, rootHeight: number): number
+	return math.max(p.slide.minHip, p.slide.height - rootHeight - p.slide.clearance)
+end
+
+-- A slide ends only where there is room to stand: under a low ceiling you stay low and keep going.
+-- headroom = free space above the feet.
+function Parkour.canStandUp(m: any, headroom: number): boolean
+	return headroom >= m.characterHeight
+end
+
 -- What a landing does. fallHeight in studs, rollTiming = seconds between pressing slide and
 -- touching down (nil if not pressed). Returns kind ("soft", "roll", "hard") and the speed after.
 function Parkour.landing(p: any, s: State, fallHeight: number, rollTiming: number?): (string, number)

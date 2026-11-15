@@ -34,6 +34,9 @@ duration = 0.7
 minSpeed = 14           # slower than this and slide does nothing
 height = 2.5            # body height while sliding (fits under gaps this low + margin)
 cooldown = 0.4
+minHip = 0.1            # lowest hip height used while sliding
+clearance = 0.1         # extra room kept between the sliding body top and slide.height
+gapMargin = 0.5         # a gap must be this much taller than slide.height to count as slide-able
 
 [wallRun]
 minSpeed = 16           # need at least this speed to start
@@ -69,7 +72,7 @@ hardStun = 0.35         # seconds of no control after a hard landing
 speed = "game rule: starting values, base above Roblox default 16 because auto-sprint"
 gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (slide spam held 31.5 forever)"
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
-slide = "game rule: starting values"
+slide = "game rule: starting values; minHip/clearance/gapMargin added for the real slide (M2)"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
 wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15"
 vault = "game rule: starting values"
