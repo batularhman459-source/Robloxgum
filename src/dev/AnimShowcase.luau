@@ -11,18 +11,9 @@ local AnimShowcase = {}
 
 AnimShowcase.BASE = Vector3.new(30, 3.2, 760)
 AnimShowcase.SPACING = 7
--- clip, time to freeze at (its key moment)
--- R6: run cycle at its 4 beats, then the vault at its 4 beats.
-AnimShowcase.LIST = {
-	{ "Run", 0.0 },
-	{ "Run", 0.1 },
-	{ "Run", 0.2 },
-	{ "Run", 0.3 },
-	{ "Vault", 0.08 },
-	{ "Vault", 0.2 },
-	{ "Vault", 0.32 },
-	{ "Vault", 0.44 },
-}
+-- clip, time to freeze at (its key moment). Empty: all clips were removed 2026-11-15; add entries
+-- like { "Run", 0.1 } when new clips exist.
+AnimShowcase.LIST = {} :: { { any } }
 
 function AnimShowcase.clear()
 	local old = Workspace:FindFirstChild("AnimShowcase")

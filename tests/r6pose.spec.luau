@@ -58,8 +58,20 @@ return {
 	end,
 
 	["bake: the smooth curve passes exactly through every authored pose"] = function(t)
-		local Clips = require("../anim/r6/Clips")
-		local keys = Clips.Vault.keys
+		-- Test poses (the tool is tested on its own; clips come and go).
+		local keys = {
+			{ t = 0, pose = { root = { pitch = 10, yaw = -15, y = -0.2 }, rarm = { fwd = 40, out = 20 } } },
+			{
+				t = 0.12,
+				pose = {
+					root = { pitch = 30, roll = -40, yaw = -60 },
+					rarm = { fwd = 10, out = 110 },
+					lleg = { fwd = 80 },
+				},
+			},
+			{ t = 0.25, pose = { root = { pitch = 18, roll = 10 }, head = { yaw = 20 }, rleg = { fwd = -30 } } },
+			{ t = 0.4, pose = { root = { pitch = 14 }, larm = { fwd = -25, out = 30 } } },
+		}
 		for _, k in keys do
 			for joint, axes in R6Pose.AXES do
 				for _, axis in axes do
