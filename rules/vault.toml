@@ -1,0 +1,40 @@
+# The toolbox Vaulting System (src/client/Vault.client.luau). Values are the model's own SETTINGS, except
+# the heights: those are measured from the ground under the feet now (designer 2026-11-17: 2 stud ledges must vault; the
+# model measured from the root part, 3 studs up on R6).
+
+[detect]
+forwardDistance = 7     # how far ahead the hitbox reaches (studs)
+minHeight = 1.0         # obstacle top above the ground under the feet: lower is just stepped over (was 0.5 above the root part)
+maxHeight = 4.5         # higher is not a vault (above the ground): walls and high ledges are ignored
+                        # (designer 2026-11-17: never get locked into a climb; was 6.5)
+hitboxWidth = 4
+hitboxHeight = 6
+groundProbe = 1.5       # heights count from the ground at most this far below the feet; none = in the air, no vault
+hitboxUp = 1.5          # the hitbox sits this far above the root part
+facingDot = 0.5         # the obstacle must be at least this much in front (higher = stricter)
+
+[types]
+stepBelow = 2.0         # top less than this above the ground: step vault
+normalBelow = 4.0       # less than this: normal vault; otherwise (up to maxHeight): high climb
+
+[push]
+delay = 0.12            # seconds into the clip before the push (at the latest)
+atDistance = 4.0        # ...or earlier, once the body is this close to the obstacle's near face (studs)
+stepForward = 38
+stepUp = 12
+normalForward = 60
+normalUp = 28
+highForward = 45
+highUp = 45
+endEarly = 0.1          # the vault ends this long before its clip does
+
+[feel]
+rampUp = 0.06           # after the push, forward speed eases up from the run-up speed to the push speed
+settle = 0.1            # the last this-many seconds ease forward speed down to the exit sprint speed
+maxOverrun = 0.3        # the vault may run this much past its clip while the body is still over the obstacle
+
+[source]
+detect = "toolbox Vaulting System SETTINGS (RasyidFZ / PurpleShade198), inserted by the designer 2026-11-17; maxHeight 6.5 -> 4.5 (designer: strict cap, no climbs on walls); groundProbe added (a 5 stud ledge got through measured from mid-jump feet)"
+types = "toolbox Vaulting System bands, re-based on the ground under the feet 2026-11-17 (step 1-2, normal 2-4, high 4-4.5 studs)"
+push = "toolbox Vaulting System: its velocity pushes and timing; atDistance added 2026-11-17 (vault keeps run-up speed, so a timed push came ~2.4 studs late and the feet clipped the top)"
+feel = "designer 2026-11-17: the speed boost felt choppy, too instant (20 -> 60 -> 22 in single frames); maxOverrun: the step vault ended inside its box and was bumped up"

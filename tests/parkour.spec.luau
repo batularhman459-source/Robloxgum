@@ -23,9 +23,6 @@ return {
 		t.eq(p.landing.rollMaxHeight, m.maxSafeFall, "roll limit must match maxSafeFall")
 		t.ok(p.speed.bonkFactor > 0 and p.speed.bonkFactor < 1, "bonkFactor 0..1")
 		t.ok(p.gain.repeatFactor > 0 and p.gain.repeatFactor < 1, "repeatFactor 0..1")
-		t.ok(p.vault.minHeight < p.vault.maxHeight, "vault min < max")
-		t.ok(p.vault.minHeight >= m.stepHeight * 0.5, "vault starts near step height")
-		t.ok(p.vault.maxHeight < m.jumpHeight, "anything you can vault you could also jump onto")
 		t.ok(p.wallRun.minSpeed <= p.speed.base, "auto-sprint alone is fast enough to wall run")
 		t.ok(p.slide.height < m.characterHeight, "slide makes you smaller")
 		t.ok(p.landing.safeHeight < p.landing.rollMaxHeight, "safe < roll limit")
@@ -46,22 +43,42 @@ return {
 
 	["momentum: mixing moves builds speed, repeating one move gains less"] = function(t)
 		local p, _, mixed = setup(t)
-		for _, mv in { "slide", "wallRun", "wallJump", "vault" } do
+		for _, mv in { "slide", "wallRun", "wallJump" } do
 			Parkour.applyMove(p, mixed, mv)
 		end
 		local _, _, same = setup(t)
-		for _ = 1, 4 do
+		for _ = 1, 3 do
 			Parkour.applyMove(p, same, "wallRun")
 		end
 		t.ok(mixed.speed > same.speed, string.format("mixed %.1f should beat repeated %.1f", mixed.speed, same.speed))
-		t.eq(mixed.speed, p.speed.base + p.gain.slide + p.gain.wallRun + p.gain.wallJump + p.gain.vault)
+		t.eq(mixed.speed, p.speed.base + p.gain.slide + p.gain.wallRun + p.gain.wallJump)
+	end,
+
+	["momentum: a vault keeps the sprint and adds to it (designer: vaults must not kill speed)"] = function(t)
+		local p, _, s = setup(t)
+		Parkour.applyMove(p, s, "slide")
+		local before = s.speed
+		s.sinceLastMove = p.speed.flowGrace -- right at the end of the flow window
+		Parkour.applyMove(p, s, "vault")
+		t.ok(p.gain.vault > 0, "gain.vault is set")
+		t.eq(s.speed, math.min(p.speed.max, before + p.gain.vault))
+		t.eq(s.sinceLastMove, 0, "a vault keeps the flow alive")
+	end,
+
+	["momentum: after a vault the sprint keeps the body's real speed"] = function(t)
+		local p, _, s = setup(t)
+		Parkour.afterVault(p, s, p.speed.base + 10)
+		t.eq(s.speed, math.min(p.speed.max, p.speed.base + 10), "faster than the gain: keep the real speed")
+		local _, _, slow = setup(t)
+		Parkour.afterVault(p, slow, 0)
+		t.eq(slow.speed, p.speed.base + p.gain.vault, "slower: the gain still applies")
 	end,
 
 	["momentum: capped at max, never below base"] = function(t)
 		local p, _, s = setup(t)
 		for _ = 1, 50 do
 			Parkour.applyMove(p, s, "wallRun")
-			Parkour.applyMove(p, s, "vault")
+			Parkour.applyMove(p, s, "slide")
 		end
 		t.eq(s.speed, p.speed.max, "capped")
 		Parkour.bonk(p, s)
@@ -75,7 +92,7 @@ return {
 	["momentum: speed holds during flow grace, then decays to base"] = function(t)
 		local p, _, s = setup(t)
 		Parkour.applyMove(p, s, "slide")
-		Parkour.applyMove(p, s, "vault")
+		Parkour.applyMove(p, s, "wallJump")
 		local fast = s.speed
 		Parkour.decay(p, s, p.speed.flowGrace * 0.9)
 		t.eq(s.speed, fast, "no decay inside the grace time")
@@ -103,7 +120,7 @@ return {
 
 	["flow: mixing moves at the same pace keeps the speed up"] = function(t)
 		local p, _, s = setup(t)
-		local moves = { "slide", "vault", "wallRun", "wallJump" }
+		local moves = { "slide", "wallRun", "wallJump" }
 		for step = 1, 200 do
 			if step % 10 == 0 then
 				Parkour.applyMove(p, s, moves[(step // 10) % #moves + 1])
@@ -232,68 +249,6 @@ return {
 		t.eq(h.x, s.speed, "keeps along-wall speed")
 		t.eq(h.z, p.wallJump.push, "pushed away from the wall")
 		t.ok(math.abs(up - math.sqrt(2 * m.gravity * p.wallJump.height)) < 1e-9, "up speed from height")
-	end,
-
-	["vault: only obstacles between step and wall height, with room on top"] = function(t)
-		local p, _, s = setup(t)
-		local function ob(h, dist, clear, depth, land)
-			return {
-				topHeight = h,
-				distance = dist or 2,
-				topClear = clear ~= false,
-				depth = depth or 2,
-				landClear = land ~= false,
-			}
-		end
-		t.ok((Parkour.canVault(p, s, ob(3))), "3 studs: vault")
-		t.eq(select(2, Parkour.canVault(p, s, ob(1))), "just a step")
-		t.eq(select(2, Parkour.canVault(p, s, ob(6))), "a wall")
-		t.eq(select(2, Parkour.canVault(p, s, ob(3, 10))), "too far")
-		t.eq(select(2, Parkour.canVault(p, s, ob(3, 2, false))), "no room on top")
-		t.eq(select(2, Parkour.canVault(p, s, ob(3, 2, true, p.vault.maxDepth + 1))), "too deep")
-		t.eq(select(2, Parkour.canVault(p, s, ob(3, 2, true, 2, false))), "no room to land")
-		s.speed = p.vault.minSpeed - 1
-		t.eq(select(2, Parkour.canVault(p, s, ob(3))), "too slow")
-		s.speed, s.sinceVault = p.speed.base, p.vault.cooldown * 0.5
-		t.eq(select(2, Parkour.canVault(p, s, ob(3))), "cooldown", "no second vault right after one")
-		s.sinceVault = p.vault.cooldown
-		t.ok((Parkour.canVault(p, s, ob(3))), "allowed again after the cooldown")
-	end,
-
-	["vault is on the jump button: only with an obstacle ready, only on the ground"] = function(t)
-		local p, _, s = setup(t)
-		t.eq(Parkour.jumpKind(p, s, true), "vault")
-		t.eq(Parkour.jumpKind(p, s, false), "jump", "no obstacle: a normal jump")
-		t.eq(Parkour.jumpKind(p, s, nil), "jump")
-		s.grounded, s.timeSinceGrounded = false, 1
-		t.eq(Parkour.jumpKind(p, s, true), "doubleJump", "in the air it is never a vault")
-	end,
-
-	["vault path: starts and ends on the ground, peaks over the obstacle, clears the top"] = function(t)
-		local p, _, s = setup(t)
-		local ob = { topHeight = 3, distance = 3, depth = 2, topClear = true, landClear = true }
-		local legs = 2
-		local plan = Parkour.vaultPlan(p, s, ob, legs)
-		t.eq(plan.distance, 3 + 2 + p.vault.landDistance)
-		local f0, u0 = Parkour.vaultOffset(plan, 0)
-		local f1, u1 = Parkour.vaultOffset(plan, 1)
-		t.ok(f0 == 0 and math.abs(u0) < 1e-9, "starts at the take-off point")
-		t.ok(math.abs(f1 - plan.distance) < 1e-9 and math.abs(u1) < 1e-9, "lands at the planned point")
-		local fp, up = Parkour.vaultOffset(plan, plan.peakAt)
-		t.ok(math.abs(fp - (ob.distance + ob.depth / 2)) < 1e-9, "peak is over the obstacle's middle")
-		t.ok(
-			math.abs(legs + up - (ob.topHeight + p.vault.clearance)) < 1e-9,
-			"torso bottom clears the top by clearance"
-		)
-		for i = 0, 20 do
-			local _, u = Parkour.vaultOffset(plan, i / 20)
-			t.ok(u >= -1e-9 and u <= plan.rise + 1e-9, "never below the ground or above the peak")
-		end
-		local timeAtSpeed = plan.distance / s.speed
-		t.ok(
-			math.abs(plan.duration - math.clamp(timeAtSpeed, p.vault.minDuration, p.vault.maxDuration)) < 1e-9,
-			"duration = distance / speed"
-		)
 	end,
 
 	["slide: needs ground, speed and cooldown"] = function(t)

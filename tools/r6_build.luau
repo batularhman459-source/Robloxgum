@@ -3,6 +3,7 @@
 --   lune run tools/r6_build
 local fs = require("@lune/fs")
 local roblox = require("@lune/roblox")
+local serde = require("@lune/serde")
 
 local Clips = require("../anim/r6/Clips")
 local R6Pose = require("../anim/r6/R6Pose")
@@ -46,8 +47,83 @@ local function importClip(name: string, clip: any): any
 	error("no sequence " .. clip.sequence .. " in " .. clip.import)
 end
 
+-- A clip authored with the roblox-animation skill (anim/r6/skill/<Name>.clip.json, rendered and checked
+-- by its r6_clip.py): resolved.json holds the exact Pose CFrames that were judged, used verbatim.
+-- Easing map = the skill's r6_joint.ROBLOX_EASE (Roblox's Pose In/Out enum is reversed, traps.md #36).
+local SKILL_EASE = {
+	linear = { "Linear", "In" },
+	constant = { "Constant", "In" },
+	["in"] = { "Cubic", "Out" },
+	out = { "Cubic", "In" },
+	smooth = { "Cubic", "InOut" },
+}
+local JOINT_PART = {
+	RootJoint = "Torso",
+	Neck = "Head",
+	["Right Shoulder"] = "Right Arm",
+	["Left Shoulder"] = "Left Arm",
+	["Right Hip"] = "Right Leg",
+	["Left Hip"] = "Left Leg",
+}
+
+local function resolvedClip(name: string, clip: any): any
+	local res = serde.decode("json", fs.readFile("anim/r6/skill/" .. clip.resolved))
+	local seq = Instance.new("KeyframeSequence")
+	seq.Name = name
+	seq.Loop = clip.loop
+	seq.Priority = Enum.AnimationPriority[clip.priority]
+	for _, k in res.keys do
+		local ease = SKILL_EASE[k.ease] or error("unknown ease " .. tostring(k.ease))
+		local style, dir = Enum.PoseEasingStyle[ease[1]], Enum.PoseEasingDirection[ease[2]]
+		local kf = Instance.new("Keyframe")
+		kf.Name = "KF" .. tostring(k.t)
+		kf.Time = k.t
+		local function jointPose(joint: string, parent: any): any
+			local pc = k.poses[joint]
+			local r = pc.rows
+			local cf = CFrame.new(
+				pc.pos[1],
+				pc.pos[2],
+				pc.pos[3],
+				r[1][1],
+				r[1][2],
+				r[1][3],
+				r[2][1],
+				r[2][2],
+				r[2][3],
+				r[3][1],
+				r[3][2],
+				r[3][3]
+			)
+			return pose(JOINT_PART[joint], cf, parent, style)
+		end
+		local root = pose("HumanoidRootPart", CFrame.new(), kf, style)
+		root.Weight = 0 -- container only
+		local torso = jointPose("RootJoint", root)
+		for _, joint in { "Neck", "Right Shoulder", "Left Shoulder", "Right Hip", "Left Hip" } do
+			local p = jointPose(joint, torso)
+			p.EasingDirection = dir
+		end
+		torso.EasingDirection = dir
+		kf.Parent = seq
+	end
+	-- Clip marks (e.g. the vault's plant / peak / land) as attributes the game syncs to: Mark_<name> = seconds.
+	for _, mk in res.markers or {} do
+		seq:SetAttribute("Mark_" .. mk[1], mk[2])
+	end
+	return seq
+end
+
 for _, name in names do
 	local clip = Clips[name]
+	if clip.resolved then
+		local seq = resolvedClip(name, clip)
+		seq.Parent = folder
+		print(
+			string.format("%-10s from skill %s, %s, loop=%s", name, clip.resolved, clip.priority, tostring(clip.loop))
+		)
+		continue
+	end
 	if clip.import then
 		local seq = importClip(name, clip)
 		seq.Parent = folder

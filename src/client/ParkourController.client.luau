@@ -69,19 +69,6 @@ local function onCharacter(char: Model)
 	local lastJumpAt = 0
 	local bufferedJumpAt: number? = nil
 
-	-- Vault: the body follows Parkour.vaultOffset over the obstacle while the Vault clip plays, timed
-	-- to the same duration. Colliding parts leave world collision for the vault (the path is measured
-	-- to clear the obstacle), and the Humanoid is put in its Physics state so it can't fight the path.
-	local vault: any = nil
-	-- ALL body parts: in the Physics state the Humanoid turns collision on for arms and legs too, and
-	-- they got pushed up out of the box by up to 1.8 studs each physics step (measured 2026-11-15).
-	local collidingParts: { BasePart } = {}
-	for _, part in char:GetChildren() do
-		if part:IsA("BasePart") then
-			table.insert(collidingParts, part)
-		end
-	end
-
 	local moveCount = 0
 	local logMoves = RunService:IsStudio() -- Studio only: the Output log survives stopping Play
 	local function setMove(name: string)
@@ -101,87 +88,26 @@ local function onCharacter(char: Model)
 		char:SetAttribute("ParkourWallRun", false)
 	end
 
-	local function startVault(dir: Vector3, ob: any)
-		local plan = Parkour.vaultPlan(p, s, ob, sensors:legLength())
-		vault = { t0 = os.clock(), plan = plan, start = hrp.Position, dir = dir }
-		if logMoves then
-			print(
-				string.format(
-					"[Parkour] vault plan: obstacle top %.2f, %.2f away, depth %.2f, legs %.2f -> distance %.2f, rise %.2f, peakAt %.2f, %.2fs",
-					ob.topHeight,
-					ob.distance,
-					ob.depth,
-					sensors:legLength(),
-					plan.distance,
-					plan.rise,
-					plan.peakAt,
-					plan.duration
-				)
-			)
-		end
-		s.sinceVault = 0
-		Parkour.applyMove(p, s, "vault")
-		for _, part in collidingParts do
-			part.CollisionGroup = "SlideBody"
-		end
-		-- The same Space press also asks the Humanoid for its own jump: cancel it and block jumping
-		-- for the vault (playtest: the body went +3.4 up where the path only rises 1.5).
-		hum.Jump = false
-		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-		hum:ChangeState(Enum.HumanoidStateType.Physics)
-		anims:stop("Run", 0.05)
-		-- No vault animation yet (all clips removed 2026-11-15). When one exists, play it here at the
-		-- speed that makes it last plan.duration: anims:play("Vault") + anims:setSpeed(...).
-		setMove("vault")
+	-- The vault is the toolbox Vaulting System (src/client/Vault.client.luau): it sets the character's
+	-- "Vaulting" attribute while it runs. This controller stays out of its way meanwhile, and handles a jump
+	-- one step later so the vault script has seen the same press first.
+	local function vaulting(): boolean
+		return char:GetAttribute("Vaulting") == true
 	end
 
-	local function endVault()
-		for _, part in collidingParts do
-			part.CollisionGroup = "Default"
-		end
-		local dir = vault.dir
-		vault = nil
-		hum.Jump = false
-		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
-		hum:ChangeState(Enum.HumanoidStateType.Freefall)
-		hrp.AssemblyLinearVelocity = dir * s.speed
-	end
-
-	local jumpConn = UserInputService.JumpRequest:Connect(function()
+	local function onJump()
 		local now = os.clock()
-		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vault then
+		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vaulting() then
 			return
 		end
-		-- Vault check: an obstacle close ahead (only on the ground; vaulting is never automatic).
-		local vaultReady, vaultDir, vaultOb = false, Vector3.zero, nil
-		if s.grounded then
-			local md = Sensors.flat(hum.MoveDirection)
-			vaultDir = if md.Magnitude > 0.1 then md else Sensors.flat(hrp.CFrame.LookVector)
-			vaultOb = sensors:obstacle(vaultDir)
-			local ok, why = Parkour.canVault(p, s, vaultOb)
-			vaultReady = ok
-			if logMoves and vaultOb and not ok then
-				print(
-					string.format(
-						"[Parkour] vault refused: %s (top %.1f, %.1f away, depth %.1f)",
-						why,
-						vaultOb.topHeight,
-						vaultOb.distance,
-						vaultOb.depth
-					)
-				)
-			end
-		end
-		local kind = Parkour.jumpKind(p, s, vaultReady)
+		local kind = Parkour.jumpKind(p, s)
 		if not kind then
 			bufferedJumpAt = now -- maybe we land in time
 			return
 		end
 		lastJumpAt = now
 		local v = hrp.AssemblyLinearVelocity
-		if kind == "vault" then
-			startVault(vaultDir, vaultOb)
-		elseif kind == "wallJump" then
+		if kind == "wallJump" then
 			local wall = sensors:wall(wallSide)
 			local normal = if wall
 				then wall.normal
@@ -211,6 +137,9 @@ local function onCharacter(char: Model)
 		else
 			setMove("jump") -- normal ground jump: the Humanoid does it
 		end
+	end
+	local jumpConn = UserInputService.JumpRequest:Connect(function()
+		task.defer(onJump)
 	end)
 
 	local stepConn = RunService.Heartbeat:Connect(function(dt)
@@ -223,22 +152,12 @@ local function onCharacter(char: Model)
 		local moving = moveDir.Magnitude > 0.1
 
 		s.sinceSlide += dt
-		s.sinceVault += dt
 		s.sinceLeftWall += dt
 
-		-- During a vault the body follows the planned path; nothing else runs.
-		if vault then
-			local t = (now - vault.t0) / vault.plan.duration
-			if t >= 1 then
-				endVault()
-			else
-				local fwd, up = Parkour.vaultOffset(vault.plan, t)
-				local pos = vault.start + vault.dir * fwd + Vector3.new(0, up, 0)
-				hrp.CFrame = CFrame.lookAt(pos, pos + vault.dir)
-				hrp.AssemblyLinearVelocity = vault.dir * (vault.plan.distance / vault.plan.duration)
-				char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
-				return
-			end
+		-- The toolbox vault moves the body itself: leave speed, animation and moves alone until it is done.
+		if vaulting() then
+			anims:stop("Run", 0.1)
+			return
 		end
 		s.heightAboveGround = if grounded then 0 else sensors:heightAboveGround()
 
@@ -306,7 +225,7 @@ local function onCharacter(char: Model)
 			end
 		end
 
-		-- Ground moves: slide, vault, bonk.
+		-- Ground moves: slide, bonk.
 		if grounded and now >= stunUntil then
 			if slideRequested then
 				slideRequested = false
@@ -369,14 +288,31 @@ local function onCharacter(char: Model)
 		char:SetAttribute("ParkourSliding", now < slideUntil)
 	end)
 
-	hum.Died:Connect(function()
+	-- Vault done: straight back into the sprint, no stop (designer 2026-11-17). The vault counts as a move
+	-- (gain.vault, keeps the flow alive), and the body leaves at the sprint speed along its facing, so the
+	-- Humanoid has nothing to brake. Fall height counts from here, so the vault's own arc is no hard landing.
+	local vaultEndConn = char:GetAttributeChangedSignal("Vaulting"):Connect(function()
+		if vaulting() or hum.Health <= 0 then
+			return
+		end
+		local look = Sensors.flat(hrp.CFrame.LookVector)
+		Parkour.afterVault(p, s, (hrp.AssemblyLinearVelocity * Vector3.new(1, 0, 1)).Magnitude)
+		setMove("vault")
+		hum.WalkSpeed = s.speed
+		hrp.AssemblyLinearVelocity = look * s.speed + Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+		peakY = hrp.Position.Y
+		bufferedJumpAt = nil
+	end)
+
+	local function disconnectAll()
 		jumpConn:Disconnect()
 		stepConn:Disconnect()
-	end)
+		vaultEndConn:Disconnect()
+	end
+	hum.Died:Connect(disconnectAll)
 	char.AncestryChanged:Connect(function(_, parent)
 		if not parent then
-			jumpConn:Disconnect()
-			stepConn:Disconnect()
+			disconnectAll()
 		end
 	end)
 end

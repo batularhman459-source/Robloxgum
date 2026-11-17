@@ -16,9 +16,9 @@ bonkFactor = 0.55       # running straight into a wall keeps this share of speed
 slide = 2
 wallRun = 3
 wallJump = 3
-vault = 2.5
 landRoll = 2
 doubleJump = 1
+vault = 2               # a toolbox vault (src/client/Vault.client.luau): you leave it at the new sprint speed
 repeatFactor = 0.5
 maxRefresh = 3          # the same move this many times in a row still keeps the flow alive; more
                         # repeats stop refreshing flowGrace, so spamming one move decays back to base
@@ -54,21 +54,6 @@ height = 6              # jump height off a wall
 push = 24               # sideways speed away from the wall
 allowBurst = 1          # 1 = run speed + push may briefly go over speed.max (punchy burst), 0 = clamp to max
 
-[vault]
-# Press jump close to an obstacle to vault (no automatic vaulting). The body then follows a path over
-# it: forward through approach + obstacle + landing at the current speed, arcing up just enough to
-# clear the top, peaking over the obstacle's middle. The animation is timed to the path.
-minHeight = 1.5         # obstacle top above feet: lower than this is just stepped over
-maxHeight = 4.5         # higher than this is a wall, not a vault
-maxDepth = 4            # deeper than this is a platform to jump onto, not something to vault
-detectDistance = 4      # jump within this distance of an obstacle = vault
-minSpeed = 12
-cooldown = 0.8          # no second vault right after one (playtest: the same box was vaulted twice)
-clearance = 0.5         # body (torso bottom) passes this far above the obstacle top
-landDistance = 2.5      # land this far past the obstacle's far side
-minDuration = 0.35      # the vault takes distance / speed seconds, kept inside these limits
-maxDuration = 0.6
-
 [landing]
 safeHeight = 12         # falls up to this cost nothing
 rollWindow = 0.25       # press slide this long before landing to roll
@@ -78,10 +63,9 @@ hardStun = 0.35         # seconds of no control after a hard landing
 
 [source]
 speed = "game rule: starting values, base above Roblox default 16 because auto-sprint"
-gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (slide spam held 31.5 forever)"
+gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (slide spam held 31.5 forever); vault added 2026-11-17 (designer: vault keeps momentum)"
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
 slide = "game rule: starting values; minHip/clearance/gapMargin added for the real slide (M2)"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
 wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15"
-vault = "game rule; press-to-vault + path (clearance, landDistance, maxDepth, durations) from the reference video 2026-11-15"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"

@@ -2,6 +2,27 @@
 local CharacterShape = require("../src/shared/CharacterShape")
 
 return {
+	["vault (toolbox Vaulting System): numbers in range, every section has a source"] = function(t)
+		local v = t.rules("vault")
+		t.ok(v.detect.minHeight < v.types.stepBelow, "a step vault is possible")
+		t.ok(
+			v.types.stepBelow < v.types.normalBelow and v.types.normalBelow < v.detect.maxHeight,
+			"type bands in order"
+		)
+		t.ok(v.detect.facingDot > 0 and v.detect.facingDot <= 1, "facingDot 0..1")
+		t.ok(v.push.delay >= 0 and v.push.endEarly >= 0, "timings")
+		t.ok(
+			v.push.atDistance > 0 and v.push.atDistance < v.detect.forwardDistance,
+			"push.atDistance inside the detect reach"
+		)
+		t.ok(v.feel.rampUp > 0 and v.feel.settle > 0 and v.feel.maxOverrun > 0, "feel times > 0")
+		for name in v do
+			if name ~= "source" then
+				t.ok(type(v.source[name]) == "string", "[" .. name .. "] needs a source entry")
+			end
+		end
+	end,
+
 	["character: widths in range, every one has a source"] = function(t)
 		local c = t.rules("character")
 		for _, k in { "torsoWidth", "armWidth", "legWidth", "headWidth" } do

@@ -20,22 +20,12 @@ export type State = {
 	wallRunning: boolean,
 	wallRunTime: number,
 	sinceSlide: number,
-	sinceVault: number,
 	heightAboveGround: number,
 	lastWallId: string?,
 	sinceLeftWall: number,
 }
 
 export type Wall = { normal: Vec2, distance: number, id: string }
-export type Obstacle = {
-	topHeight: number, -- top above the feet
-	distance: number, -- from the body front to the obstacle's near face
-	depth: number, -- obstacle thickness along the run direction
-	topClear: boolean, -- room on top for the body to pass
-	landClear: boolean, -- nothing in the way of the landing
-}
-export type VaultPlan = { distance: number, rise: number, peakAt: number, duration: number }
-
 local Parkour = {}
 
 local function dot(a: Vec2, b: Vec2): number
@@ -55,7 +45,6 @@ function Parkour.newState(p: any): State
 		wallRunning = false,
 		wallRunTime = 0,
 		sinceSlide = math.huge,
-		sinceVault = math.huge,
 		heightAboveGround = 0,
 		lastWallId = nil,
 		sinceLeftWall = math.huge,
@@ -90,6 +79,14 @@ function Parkour.applyMove(p: any, s: State, move: string)
 	s.sinceAnyMove = 0
 end
 
+-- A vault just ended (src/client/Vault.client.luau). It counts as a move, and the sprint carries on at the speed
+-- the body actually has (exitSpeed, horizontal), so the hand-off has no hitch (designer 2026-11-17: zero speed
+-- loss in or out). Still inside base..max.
+function Parkour.afterVault(p: any, s: State, exitSpeed: number)
+	Parkour.applyMove(p, s, "vault")
+	s.speed = math.clamp(math.max(s.speed, exitSpeed), p.speed.base, p.speed.max)
+end
+
 -- Speed falls back towards base once the flow breaks (no fresh move for flowGrace seconds).
 -- The repeat chain only resets after a real pause (no move at all for flowGrace), so a spammed
 -- move can't restart its full gain every time speed reaches base (that made a +3.5 sawtooth).
@@ -110,15 +107,11 @@ function Parkour.bonk(p: any, s: State)
 	s.lastMove, s.repeatCount = nil, 0
 end
 
--- Which jump a jump press means right now: "vault", "jump", "wallJump", "doubleJump" or nil.
--- vaultReady = an obstacle close ahead passes canVault (vaulting is on the jump button, never automatic).
--- Coyote time lets a jump happen just after running off an edge.
-function Parkour.jumpKind(p: any, s: State, vaultReady: boolean?): string?
+-- Which jump a jump press means right now: "jump", "wallJump", "doubleJump" or nil. (Vaulting is the toolbox
+-- Vaulting System, src/client/Vault.client.luau, not this module.)
+function Parkour.jumpKind(p: any, s: State): string?
 	if s.wallRunning then
 		return "wallJump"
-	end
-	if vaultReady and s.grounded then
-		return "vault"
 	end
 	if s.grounded or s.timeSinceGrounded <= p.jump.coyoteTime then
 		return "jump"
@@ -195,66 +188,6 @@ end
 -- Vertical take-off speed for a jump of `height` studs.
 function Parkour.jumpVelocity(m: any, height: number): number
 	return math.sqrt(2 * m.gravity * height)
-end
-
--- Is the obstacle ahead a vault (not a step, not a wall)?
-function Parkour.canVault(p: any, s: State, ob: Obstacle?): (boolean, string)
-	local v = p.vault
-	if not ob then
-		return false, "nothing ahead"
-	end
-	if ob.distance > v.detectDistance then
-		return false, "too far"
-	end
-	if ob.topHeight < v.minHeight then
-		return false, "just a step"
-	end
-	if ob.topHeight > v.maxHeight then
-		return false, "a wall"
-	end
-	if ob.depth > v.maxDepth then
-		return false, "too deep"
-	end
-	if not ob.topClear then
-		return false, "no room on top"
-	end
-	if not ob.landClear then
-		return false, "no room to land"
-	end
-	if s.speed < v.minSpeed then
-		return false, "too slow"
-	end
-	if s.sinceVault < v.cooldown then
-		return false, "cooldown"
-	end
-	return true, "ok"
-end
-
--- The path of a vault. legLength = feet to the bottom of the torso (2 on R6).
--- distance: forward travel (approach + obstacle + landing); rise: how far the body goes up so the torso
--- clears the top by vault.clearance; peakAt: 0..1, where the arc peaks (over the obstacle's middle);
--- duration: distance / speed, kept within vault.minDuration..maxDuration.
-function Parkour.vaultPlan(p: any, s: State, ob: Obstacle, legLength: number): VaultPlan
-	local v = p.vault
-	local distance = ob.distance + ob.depth + v.landDistance
-	local rise = math.max(0.3, ob.topHeight + v.clearance - legLength)
-	local peakAt = math.clamp((ob.distance + ob.depth / 2) / distance, 0.2, 0.8)
-	local duration = math.clamp(distance / math.max(s.speed, p.speed.base), v.minDuration, v.maxDuration)
-	return { distance = distance, rise = rise, peakAt = peakAt, duration = duration }
-end
-
--- Where the body is along a vault at t (0..1): forward distance and height above the start.
--- Forward moves at a steady speed; height rises on a quarter sine to the peak and comes back down on
--- another, so the arc is smooth at the top and lands with no bump.
-function Parkour.vaultOffset(plan: VaultPlan, t: number): (number, number)
-	t = math.clamp(t, 0, 1)
-	local up
-	if t <= plan.peakAt then
-		up = plan.rise * math.sin(math.pi / 2 * t / plan.peakAt)
-	else
-		up = plan.rise * math.cos(math.pi / 2 * (t - plan.peakAt) / (1 - plan.peakAt))
-	end
-	return plan.distance * t, up
 end
 
 function Parkour.canSlide(p: any, s: State): boolean
