@@ -79,11 +79,19 @@ return {
 		t.eq(#a.traps[1], 9, "the whole pit floor")
 	end,
 
-	["jumps: a 6 stud gap is jumpable, a 12 stud gap is not"] = function(t)
-		local s, g = build(t, { { 0, 0, 4, 4, 0 }, { 8, 0, 12, 4, 0 }, { 19, 0, 22, 4, 0 } })
+	["jumps: a 6 stud gap is jumpable, a gap past the running-jump reach is not"] = function(t)
+		-- The far gap comes from the rules (walkSpeed x flat jump air time), not a fixed 12: at walkSpeed 27 a
+		-- 12 stud gap became jumpable (2026-11-18).
+		local m = t.rules("movement")
+		local reach = m.walkSpeed * (Movement.jumpAirTime(m, 0) :: number)
+		local far = 12 + math.ceil(reach / CELL) + 2
+		local s, g = build(t, { { 0, 0, 4, 4, 0 }, { 8, 0, 12, 4, 0 }, { far, 0, far + 3, 4, 0 } })
 		local a = MapGraph.analyze(g, { find(s, 0, 0, 0) })
 		t.ok(a.reachable[find(s, 8, 0, 0)], "6 stud gap (3 empty cells) should be jumpable")
-		t.ok(not a.reachable[find(s, 19, 0, 0)], "12 stud gap should not be")
+		t.ok(
+			not a.reachable[find(s, far, 0, 0)],
+			string.format("a %d stud gap (reach %.1f) should not be", (far - 12) * CELL, reach)
+		)
 	end,
 
 	["jumps: a 4 stud step up needs a jump and works, a wall blocks it"] = function(t)

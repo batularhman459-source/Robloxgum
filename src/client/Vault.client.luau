@@ -168,7 +168,10 @@ local function onCharacter(character: Model)
 		local pushedAt: number? = nil
 		local startedAt = os.clock()
 		local endAt = math.huge -- set once the clip plays (below)
-		local exitSpeed = VaultMath.exitSpeed(parkourRules, entrySpeed)
+		-- Ease out to the sprint speed ParkourController will hand back (fix 2026-11-18: a vault out of a 45 slide
+		-- eased to 45 and then dropped to the sprint in one frame).
+		local sprint = character:GetAttribute("ParkourSpeed")
+		local exitSpeed = VaultMath.exitSpeed(parkourRules, if type(sprint) == "number" then sprint else entrySpeed)
 		local peakSpeed = entrySpeed
 		local function push()
 			pushedAt = os.clock()

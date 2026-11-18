@@ -1,0 +1,33 @@
+# Sense of speed (src/client/SpeedFeel.client.luau): the camera's field of view widens with how fast you move, and
+# faint wind lines stream past the screen edges when you are fast. Designer 2026-11-18: "sense of speed is missing a
+# bit in the cam", picked "FOV grows with speed" and "speed lines when fast". Speeds in studs/s (parkour.toml: sprint
+# 27, cap 45, slide burst 60).
+
+[fov]
+base = 70               # field of view when standing or walking (Roblox's default camera)
+fromSpeed = 16          # below this, no extra (walking)
+toSpeed = 52            # at and above this, the full extra
+add = 20                # degrees added at full speed (sprint 27 gives about +4, the 45 cap about +17); was 14
+smoothing = 0.2         # seconds: the field of view follows speed this smoothly (no snaps)
+
+[lines]
+# Wind lines: Roblox's built-in sparkle texture stretched into streaks, spawned on a ring ahead of the camera and
+# flying past it, so they cross the screen edges and never the middle.
+texture = "rbxasset://textures/particles/sparkles_main.dds"
+fromSpeed = 28          # none below this (just above the 27 sprint, so plain running stays clean)
+toSpeed = 46            # full rate from here
+rate = 120              # lines per second at full speed
+distance = 14           # studs ahead of the camera where they start
+radius = 9              # studs: the ring they start on
+lifeMin = 0.18
+lifeMax = 0.3
+speedMin = 55           # studs/s towards and past the camera
+speedMax = 80
+width = 0.09            # studs
+squash = 8              # stretched into streaks along their motion
+transparency = 0.4
+lightEmission = 0.8
+
+[source]
+fov = "designer 2026-11-18 picked FOV grows with speed; add 14 -> 20 the same day (designer: make the sense of speed stronger)"
+lines = "designer 2026-11-18 picked speed lines when fast; denser, brighter, earlier the same day (stronger sense of speed)"

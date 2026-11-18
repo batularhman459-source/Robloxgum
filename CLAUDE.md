@@ -21,7 +21,7 @@ src/dev/          Studio dev tools -> ReplicatedStorage.DevTools: MapProbe (9 ma
                   (real movement in play), TestCourse (map with planted flaws). Always require a :Clone().
 maps/             models/*.py (Blender model scripts), budgets.toml, STYLES.md, briefs/, reports/.
 anim/r6/          R6 animations (the game is R6). Clips.luau = poses in body terms (fwd/out, pitch/roll/yaw),
-                  R6Pose.luau = converts them to real R6 joint transforms (directions proven in
+                  src/shared/R6Pose.luau = converts them to real R6 joint transforms (directions proven in
                   tests/r6pose.spec). anim/build.ps1 -> src/client/Anims.rbxm. Never edit Anims.rbxm.
                   Judge every clip on the avatar with DevTools.AnimShowcase. Upload only with an OK.
 tools/            Lune tools: ui.luau (build/check), UiCheck, Preview. icon.ps1 (FLUX icons).

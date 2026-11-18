@@ -17,6 +17,8 @@ export type State = {
 	repeatCount: number, -- how many times lastMove was done in a row
 	sinceLastMove: number, -- seconds since the last move that refreshed the flow
 	sinceAnyMove: number, -- seconds since any move at all (spammed repeats included)
+	sinceVault: number, -- seconds since the last vault ended
+	vaultChain: number, -- vaults in a row, each within vaultChain.window of the last
 	wallRunning: boolean,
 	wallRunTime: number,
 	sinceSlide: number,
@@ -42,6 +44,8 @@ function Parkour.newState(p: any): State
 		repeatCount = 0,
 		sinceLastMove = math.huge,
 		sinceAnyMove = math.huge,
+		sinceVault = math.huge,
+		vaultChain = 0,
 		wallRunning = false,
 		wallRunTime = 0,
 		sinceSlide = math.huge,
@@ -79,12 +83,27 @@ function Parkour.applyMove(p: any, s: State, move: string)
 	s.sinceAnyMove = 0
 end
 
--- A vault just ended (src/client/Vault.client.luau). It counts as a move, and the sprint carries on at the speed
--- the body actually has (exitSpeed, horizontal), so the hand-off has no hitch (designer 2026-11-17: zero speed
--- loss in or out). Still inside base..max.
-function Parkour.afterVault(p: any, s: State, exitSpeed: number)
+-- A vault just ended (src/client/Vault.client.luau). It counts as a move and adds gain.vault, plus the chain bonus:
+-- from the 2nd vault within vaultChain.window of the last, +step each, up to cap from one chain (designer
+-- 2026-11-18). A chain always keeps the flow alive (vaults need real obstacles, so they cannot be spammed). The
+-- vault's own forward push is NOT carried over (measured: that turned a 20 run-up into a 23 sprint).
+-- Returns the chain bonus it gave.
+function Parkour.afterVault(p: any, s: State): number
+	local c = p.vaultChain
+	s.vaultChain = if s.sinceVault <= c.window then s.vaultChain + 1 else 1
+	s.sinceVault = 0
 	Parkour.applyMove(p, s, "vault")
-	s.speed = math.clamp(math.max(s.speed, exitSpeed), p.speed.base, p.speed.max)
+	s.sinceLastMove = 0
+	local steps = s.vaultChain - 1
+	local bonus = if steps >= 1 and steps * c.step <= c.cap then c.step else 0
+	s.speed = math.clamp(s.speed + bonus, p.speed.base, p.speed.max)
+	return bonus
+end
+
+-- A move hands its speed on to the sprint: never slower than the sprint already is, never above speed.max.
+-- (Slide end, slide jump.)
+function Parkour.carry(p: any, s: State, speed: number)
+	s.speed = math.clamp(math.max(s.speed, speed), p.speed.base, p.speed.max)
 end
 
 -- Speed falls back towards base once the flow breaks (no fresh move for flowGrace seconds).
@@ -92,6 +111,7 @@ end
 -- move can't restart its full gain every time speed reaches base (that made a +3.5 sawtooth).
 function Parkour.decay(p: any, s: State, dt: number)
 	s.sinceLastMove += dt
+	s.sinceVault += dt
 	s.sinceAnyMove += dt
 	if s.sinceLastMove > p.speed.flowGrace and s.speed > p.speed.base then
 		s.speed = math.max(p.speed.base, s.speed - p.speed.decayPerSecond * dt)

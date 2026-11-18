@@ -60,18 +60,41 @@ return {
 		local before = s.speed
 		s.sinceLastMove = p.speed.flowGrace -- right at the end of the flow window
 		Parkour.applyMove(p, s, "vault")
-		t.ok(p.gain.vault > 0, "gain.vault is set")
+		t.ok(p.gain.vault >= 0, "gain.vault never takes speed away")
 		t.eq(s.speed, math.min(p.speed.max, before + p.gain.vault))
 		t.eq(s.sinceLastMove, 0, "a vault keeps the flow alive")
 	end,
 
-	["momentum: after a vault the sprint keeps the body's real speed"] = function(t)
+	["momentum: a vault adds only gain.vault to the sprint (designer 2026-11-18: no vault boost)"] = function(t)
 		local p, _, s = setup(t)
-		Parkour.afterVault(p, s, p.speed.base + 10)
-		t.eq(s.speed, math.min(p.speed.max, p.speed.base + 10), "faster than the gain: keep the real speed")
-		local _, _, slow = setup(t)
-		Parkour.afterVault(p, slow, 0)
-		t.eq(slow.speed, p.speed.base + p.gain.vault, "slower: the gain still applies")
+		local before = s.speed
+		Parkour.afterVault(p, s)
+		t.eq(s.speed, math.min(p.speed.max, before + p.gain.vault))
+	end,
+
+	["vault chain: the 1st vault adds nothing, each next one within the window adds a step, up to the cap"] = function(
+		t
+	)
+		local p, _, s = setup(t)
+		local c = p.vaultChain
+		local start = s.speed
+		t.eq(Parkour.afterVault(p, s), 0, "1st vault: no chain bonus")
+		local total = 0
+		for _ = 1, 10 do
+			Parkour.decay(p, s, c.window * 0.5)
+			total += Parkour.afterVault(p, s)
+		end
+		t.ok(total <= c.cap + 1e-9, string.format("chain bonus %.1f within the cap %.1f", total, c.cap))
+		t.ok(total >= c.step, "a chain does pay")
+		t.ok(s.speed <= p.speed.max and s.speed > start, "faster, never over the cap")
+	end,
+
+	["vault chain: a pause longer than the window starts over"] = function(t)
+		local p, _, s = setup(t)
+		Parkour.afterVault(p, s)
+		Parkour.decay(p, s, p.vaultChain.window + 0.1)
+		t.eq(Parkour.afterVault(p, s), 0, "too late: a new chain")
+		t.eq(s.vaultChain, 1)
 	end,
 
 	["momentum: capped at max, never below base"] = function(t)

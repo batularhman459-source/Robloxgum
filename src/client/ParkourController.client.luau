@@ -7,11 +7,15 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local Rules = ReplicatedStorage:WaitForChild("Rules")
 local p = require(Rules:WaitForChild("parkour")) :: any
 local m = require(Rules:WaitForChild("movement")) :: any
 local Parkour = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Parkour"))
+local SlideMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SlideMath"))
+local SlideFeel = require(script.Parent:WaitForChild("SlideFeel"))
+local SlideState = ReplicatedStorage:WaitForChild("SlideState") :: RemoteEvent -- src/server/SlideNet.server.luau
 local Sensors = require(script.Parent:WaitForChild("ParkourSensors"))
 local ParkourAnims = require(script.Parent:WaitForChild("ParkourAnims"))
 local UiRuntime = require(script.Parent:WaitForChild("UiRuntime"))
@@ -39,6 +43,23 @@ local function onCharacter(char: Model)
 	local stunUntil = 0
 	local slideUntil = 0
 	local slideDir = Vector3.zero
+	-- The slide's speed curve (SlideMath, designer spec 2026-11-17): burst, ease back to the sprint speed, slope
+	-- momentum. nil when not sliding. Its look: SlideFeel (pose, camera, rock chips, wind trails).
+	local slide: SlideMath.Slide? = nil
+	local feel = SlideFeel.new(char, hum, hrp, true)
+	local groundParams = RaycastParams.new()
+	groundParams.FilterType = Enum.RaycastFilterType.Exclude
+	groundParams.FilterDescendantsInstances = { char }
+	-- How much the ground under the body runs downhill along the slide (sin of the slope; - = uphill).
+	local function downhill(): number
+		-- down to just below the feet: the ground the slide is on
+		local reach = hrp.Position.Y - sensors:feetY() + hrp.Size.Y / 2
+		local hit = Workspace:Raycast(hrp.Position, Vector3.new(0, -reach, 0), groundParams)
+		if not hit then
+			return 0
+		end
+		return slideDir:Dot(Vector3.new(hit.Normal.X, 0, hit.Normal.Z))
+	end
 
 	-- Real slide: hips down so the body fits under slide.height, upper body out of world collision.
 	local standHip = hum.HipHeight
@@ -56,6 +77,10 @@ local function onCharacter(char: Model)
 			return
 		end
 		low = on
+		if feel then
+			feel:set(on)
+		end
+		SlideState:FireServer(on) -- so the other players see the slide too
 		-- R15 only for now: R6 ignores HipHeight (it would raise the body) and its only colliding parts
 		-- are Torso and Head, so removing them from collision would drop it through the floor. The R6
 		-- slide-under-gaps (a small low collider) is a planned rebuild.
@@ -98,6 +123,23 @@ local function onCharacter(char: Model)
 	local function onJump()
 		local now = os.clock()
 		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vaulting() then
+			return
+		end
+		-- Space mid-slide: the slide jump, a jump out of the slide where there is room to stand up. No speed
+		-- reward (designer 2026-11-18: remove the huge boost): you leave at the sprint speed, plus only what a
+		-- downhill added, the same as a cancel.
+		if slide and s.grounded and Parkour.canStandUp(m, sensors:headroom()) then
+			lastJumpAt = now
+			Parkour.carry(p, s, SlideMath.keepSpeed(slide))
+			slide = nil
+			slideUntil = now
+			setLow(false)
+			Parkour.applyMove(p, s, "slideJump")
+			hrp.AssemblyLinearVelocity = slideDir * s.speed
+				+ Vector3.new(0, Parkour.jumpVelocity(m, p.slide.jumpHeight), 0)
+			hum.WalkSpeed = s.speed
+			peakY = hrp.Position.Y
+			setMove("slideJump")
 			return
 		end
 		local kind = Parkour.jumpKind(p, s)
@@ -229,12 +271,34 @@ local function onCharacter(char: Model)
 		if grounded and now >= stunUntil then
 			if slideRequested then
 				slideRequested = false
-				if Parkour.canSlide(p, s) then
+				local current = slide
+				if current then
+					-- Slide cancel (designer 2026-11-18): C again pops you up into the sprint, where there is room to
+					-- stand. No speed reward: you leave at the sprint speed, as if the slide had ended (gain.slideCancel).
+					if SlideMath.canCancel(p, current) and Parkour.canStandUp(m, sensors:headroom()) then
+						Parkour.carry(p, s, SlideMath.keepSpeed(current)) -- a slope's speed only, no cancel reward
+						Parkour.applyMove(p, s, "slideCancel")
+						slide = nil
+						slideUntil = now
+						if feel then
+							feel:cancel()
+						end
+						setLow(false)
+						hum.WalkSpeed = s.speed
+						hrp.AssemblyLinearVelocity = slideDir * s.speed
+							+ Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+						setMove("slideCancel")
+					elseif logMoves then
+						print(string.format("[Parkour] cancel refused (%.2fs into the slide)", current.t))
+					end
+				elseif Parkour.canSlide(p, s) then
 					s.sinceSlide = 0
-					slideUntil = now + p.slide.duration
+					slideUntil = now + p.slide.maxDuration
 					slideDir = if moving then moveDir else Sensors.flat(hrp.CFrame.LookVector)
+					local entry = (hrp.AssemblyLinearVelocity * Vector3.new(1, 0, 1)).Magnitude
 					setLow(true)
 					Parkour.applyMove(p, s, "slide")
+					slide = SlideMath.new(entry, s.speed)
 					setMove("slide")
 				elseif logMoves then
 					print(string.format("[Parkour] slide refused (speed %.1f, cooldown %.2fs)", s.speed, s.sinceSlide))
@@ -255,6 +319,19 @@ local function onCharacter(char: Model)
 			slideRequested = false
 		end
 
+		-- Slide physics: burst, ease back to the sprint speed, slopes. Ends by SlideMath.done, or off an edge;
+		-- the speed it ends with carries into the sprint (capped at speed.max).
+		local current = slide
+		if current then
+			local d = downhill()
+			SlideMath.step(p, current, dt, d)
+			if SlideMath.done(p, current, d) or (not grounded and s.timeSinceGrounded > p.jump.coyoteTime) then
+				Parkour.carry(p, s, SlideMath.keepSpeed(current))
+				slide = nil
+				slideUntil = now
+			end
+		end
+
 		-- Slide time up: stand only where there is room, otherwise stay low and keep sliding.
 		if low and now >= slideUntil then
 			if Parkour.canStandUp(m, sensors:headroom()) then
@@ -267,8 +344,11 @@ local function onCharacter(char: Model)
 		-- Speed: auto-sprint at the momentum speed; stunned = stop; sliding = locked direction.
 		if now < stunUntil then
 			hum.WalkSpeed = 0
+		elseif slide then
+			hum.WalkSpeed = slide.speed
+			hum:Move(slideDir, false)
 		elseif now < slideUntil then
-			hum.WalkSpeed = s.speed
+			hum.WalkSpeed = s.speed -- still low under a ceiling: keep going at the sprint speed
 			hum:Move(slideDir, false)
 		else
 			-- Always the momentum speed: with no input the Humanoid stands still anyway. (WalkSpeed 0 made
@@ -291,12 +371,33 @@ local function onCharacter(char: Model)
 	-- Vault done: straight back into the sprint, no stop (designer 2026-11-17). The vault counts as a move
 	-- (gain.vault, keeps the flow alive), and the body leaves at the sprint speed along its facing, so the
 	-- Humanoid has nothing to brake. Fall height counts from here, so the vault's own arc is no hard landing.
+	-- Only a real end (true -> false): the vault script also sets false once at spawn, which logged a fake vault.
+	local wasVaulting = vaulting()
 	local vaultEndConn = char:GetAttributeChangedSignal("Vaulting"):Connect(function()
-		if vaulting() or hum.Health <= 0 then
+		local was = wasVaulting
+		wasVaulting = vaulting()
+		if not was and wasVaulting then
+			-- A vault during a slide cuts the slide at once (designer 2026-11-18): no exit motion, so the vault's
+			-- own animation plays, never the vault inside the slide pose. The slide's speed is the vault's entry.
+			if slide or low then
+				slide = nil
+				slideUntil = os.clock()
+				if feel then
+					feel:interrupt()
+				end
+				SlideState:FireServer("cut")
+				setLow(false)
+			end
+			return
+		end
+		if not was or wasVaulting or hum.Health <= 0 then
 			return
 		end
 		local look = Sensors.flat(hrp.CFrame.LookVector)
-		Parkour.afterVault(p, s, (hrp.AssemblyLinearVelocity * Vector3.new(1, 0, 1)).Magnitude)
+		local chainBonus = Parkour.afterVault(p, s)
+		if logMoves and chainBonus > 0 then
+			print(string.format("[Parkour] vault chain x%d: +%.1f", s.vaultChain, chainBonus))
+		end
 		setMove("vault")
 		hum.WalkSpeed = s.speed
 		hrp.AssemblyLinearVelocity = look * s.speed + Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
@@ -308,6 +409,9 @@ local function onCharacter(char: Model)
 		jumpConn:Disconnect()
 		stepConn:Disconnect()
 		vaultEndConn:Disconnect()
+		if feel then
+			feel:destroy()
+		end
 	end
 	hum.Died:Connect(disconnectAll)
 	char.AncestryChanged:Connect(function(_, parent)

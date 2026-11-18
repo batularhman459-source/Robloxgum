@@ -1,7 +1,7 @@
 # Player movement. The map checks compute every reach, jump and fall from these numbers.
 # Each value has its source in [source]. If the game changes a value in code, change it here too.
 
-walkSpeed = 20          # studs per second, ground speed the map checks assume (= parkour.toml speed.base)
+walkSpeed = 27          # studs per second (20 -> 24 -> 27; designer 2026-11-18: faster, then a bit more), ground speed the map checks assume (= parkour.toml speed.base)
 jumpHeight = 7.2        # studs, peak of a standing jump
 gravity = 196.2         # studs per second squared
 maxSlopeAngle = 89      # degrees, steeper surfaces are walls

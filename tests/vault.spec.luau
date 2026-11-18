@@ -35,7 +35,7 @@ return {
 			last = sp
 		end
 		t.ok(worst < (peak - entry) * 0.5, string.format("largest one-frame change %.1f", worst))
-		t.ok(exit > entry, "the vault adds speed")
+		t.ok(exit >= entry, "the vault never loses speed")
 	end,
 
 	["vault: ends at the clip end only once clear of the obstacle, never too late"] = function(t)

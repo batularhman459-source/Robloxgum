@@ -1,0 +1,177 @@
+# How the slide looks, sounds and feels (src/client/SlideFeel.luau). The slide's physics are in parkour.toml [slide].
+# Designer spec 2026-11-17 + the reference clip (Downloads/ssstik.io_1794922790835.mp4, first 1.6 s): body low and
+# leaned back, lead leg straight out, trailing arm reaching back to the ground, rock chips kicked up, wind trails.
+# Designer feedback 2026-11-17 on the first version: "animation too stiff, entry and exit not good, VFX not good, no
+# sound" -> keyed entry and exit with anticipation and overshoot, a living hold, dust + debris + scrape + streaks, sound.
+
+[pose]
+# The HOLD pose. R6 body angles in degrees (src/shared/R6Pose.luau: pitch + = lean forward, fwd + = swing forward,
+# out + = away from the body). root.y drops the body (studs) so the legs lie on the ground.
+rootPitch = -55         # torso leaned back
+rootY = -1.45           # body down (measured: -1.8 put the lead leg 0.3 into the floor)
+headPitch = 40          # head tips forward again to look ahead
+rlegFwd = 35            # lead (right) leg straight out along the ground
+rlegOut = 5
+llegFwd = 38            # left leg out flat beside the lead leg, splayed (R6 has no knee to tuck it; -15 and 22 went into the floor)
+llegOut = 25
+llegTwist = 25
+larmFwd = -95           # trailing (left) arm reaches back to the ground
+larmOut = 30
+rarmFwd = 45            # right arm forward for balance
+rarmOut = 35
+
+[timing]
+blendIn = 0.03          # seconds to fade the run animation out at the start (the entry starts from standing)
+blendOut = 0.05         # seconds to fade it back in at the end of the exit
+cancelSpeed = 1.4       # a slide cancel plays the exit this much faster
+legLead = 0.02          # entry: legs run this many seconds AHEAD of the body (up before it drops);
+                        # exit: this many seconds BEHIND it (down after it rises), so feet stay out of the floor
+
+# Entry: from standing, a kick forward (anticipation: both legs out front, like a baseball slide), a lean back past
+# the hold pose (overshoot), settle into the hold. Leg tips checked against the floor on the avatar in Studio:
+# lowest -0.13 (same as standing). A lunge with the left leg back went 0.6 into the floor as it swung through.
+# Retimed 2026-11-18 (designer: "not snappy", picked a faster drop in): 0.27 s -> 0.13 s.
+# t in seconds; hold = true means "the [pose] above". Angles as in [pose].
+[[entry]]
+t = 0.0
+pose = {}
+[[entry]]
+t = 0.04
+pose = { root = { pitch = 0, y = -0.3 }, rleg = { fwd = 60 }, lleg = { fwd = 45, out = 20 }, larm = { fwd = -45, out = 15 }, rarm = { fwd = 40, out = 15 } }
+[[entry]]
+t = 0.085
+pose = { root = { pitch = -63, y = -1.5 }, head = { pitch = 48 }, rleg = { fwd = 40, out = 5 }, lleg = { fwd = 42, out = 28, twist = 25 }, larm = { fwd = -108, out = 34 }, rarm = { fwd = 66, out = 44 } }
+[[entry]]
+t = 0.13
+hold = true
+
+# Exit: from wherever the slide was, sit up and rise while the legs stay out front, then step down into the run with a
+# small forward lean. Measured: lowest leg -0.29 (plain running dips -0.4). Leaning forward while still low (the
+# first version) swung the legs 1.0 into the floor. Retimed 2026-11-18 (designer: quick get-up): 0.32 s -> 0.18 s.
+[[exit]]
+t = 0.0
+hold = true
+[[exit]]
+t = 0.055
+pose = { root = { pitch = -20, y = -0.6 }, head = { pitch = 15 }, rleg = { fwd = 45 }, lleg = { fwd = 35, out = 15 }, larm = { fwd = 30, out = 10 }, rarm = { fwd = -20, out = 10 } }
+[[exit]]
+t = 0.11
+pose = { root = { pitch = 6, y = 0 }, head = { pitch = -5 }, rleg = { fwd = 20 }, lleg = { fwd = -12, out = 5 }, larm = { fwd = 25 }, rarm = { fwd = -25 } }
+[[exit]]
+t = 0.18
+pose = {}
+
+[sway]
+# The hold is never frozen: small sine motions (degrees, per second) plus a lean that follows the speed.
+rootRollAmp = 3         # body rocks side to side
+rootRollHz = 1.6
+rarmAmp = 8             # balance arm sways
+rarmHz = 2.2
+larmAmp = 4             # trailing hand chatters on the ground
+larmHz = 11
+headYawAmp = 4
+headYawHz = 0.9
+leanAtBurst = -10       # extra lean back (pitch) at full burst speed, none at sprint speed
+
+[camera]
+offsetY = -1.0          # Humanoid.CameraOffset while sliding (studs); was -1.8 (designer 2026-11-18: camera snap, tone it way down)
+fovAdd = 4              # Field of view bump while sliding (degrees); was 10
+tweenIn = 0.3           # eases in, no snap (was 0.08)
+tweenOut = 0.35         # was 0.2
+tilt = 0                # degrees of camera roll held while sliding (was 2)
+
+[kick]
+# The camera kick on impact (designer 2026-11-18 picked "camera kick" for snappy): a quick punch that settles.
+time = 0.28             # seconds the kick lasts
+attack = 0.03           # seconds to its peak
+fovPunch = 1           # extra field of view at the peak (degrees); was 7 (designer 2026-11-18: tone the snap way down)
+roll = 0                # extra camera roll at the peak (degrees); was 5
+shake = 0               # camera shake at the peak (studs); was 0.12
+cancelScale = 0.6       # a slide cancel kicks this much (of the above)
+
+[dust]
+# A dust cloud from under the body: ParticleEmitter, Roblox's own smoke texture (no upload).
+texture = "rbxasset://textures/particles/smoke_main.dds"
+ratePerSpeed = 1.6      # particles per second per stud/s of speed
+burst = 16              # puff when the slide starts
+exitBurst = 8           # puff when it ends
+lifeMin = 0.35
+lifeMax = 0.75
+sizeStart = 0.9         # studs
+sizeEnd = 3.2
+transparencyStart = 0.3     # was 0.45: hard to see on the grey baseplate
+speedMin = 2            # studs/s, thrown back and up
+speedMax = 7
+drag = 5
+rise = 2.5              # upward drift (studs/s^2)
+lighten = 0.55          # ground colour mixed this much toward white (0.3 vanished on grey ground)
+
+[debris]
+# Rock chips with real arcs: thrown up and back, fall, bounce once, tumble, fade.
+ratePerSpeed = 0.45     # chips per second per stud/s of speed
+burst = 9               # chips when the slide starts
+minSize = 0.18          # studs
+maxSize = 0.55
+upMin = 9               # studs/s
+upMax = 18
+backMin = 4             # studs/s, against the slide
+backMax = 12
+side = 6                # studs/s, random sideways
+bounce = 0.35           # share of the falling speed kept on the bounce
+life = 0.9              # seconds
+darken = 0.25           # ground colour mixed this much toward black
+
+[scrape]
+# A flat mark on the ground behind the body: a Trail lying along the floor.
+width = 1.3             # studs
+lifetime = 0.45
+transparency = 0.55
+darken = 0.35
+
+[streaks]
+# Wind lines streaming back past the body (numbers from the user's harvested "Lines" layer, Hit-03).
+texture = "rbxasset://textures/particles/sparkles_main.dds"
+rate = 45
+lifeMin = 0.15
+lifeMax = 0.3
+speedMin = 25
+speedMax = 45
+size = 0.18
+squash = 3              # stretched along their motion
+transparency = 0.3
+lightEmission = 0.5
+spread = 25             # degrees
+
+[trail]
+lifetime = 0.12         # seconds a wind streak on a limb lasts
+width = 0.15            # streak width at the limb (studs)
+transparency = 0.45     # streak start transparency (1 = invisible)
+
+[sound]
+# Creator Store audio, measured in Studio 2026-11-17 (IsLoaded, TimeLength). Ids only here, nowhere in code.
+scrapeId = 101177667565550  # SlideSFX, 2.039 s, looped (alternative: skid_gravel1 122588557195414, 3.18 s)
+scrapeVolume = 0.5
+scrapeFadeIn = 0.06
+scrapeFadeOut = 0.15
+scrapePitchMin = 0.9    # at sprint speed
+scrapePitchMax = 1.2    # at full burst
+rollOff = 60            # studs: other players hear it this far away
+
+[net]
+maxPerSecond = 6        # slide messages a player may send per second (a slide sends 2-3; cooldown 0.8 s)
+
+[source]
+pose = "designer slide spec 2026-11-17 (torso ~55 back, right leg straight forward, left tucked, trailing arm back), angles set against the reference clip and judged on the avatar"
+timing = "2026-11-18: faster blends and cancelSpeed (designer: snappy, slide cancel); designer feedback 2026-11-17 (stiff, bad entry and exit); legLead replaces the shared-weight lead after measuring legs 0.8 into the floor mid-blend"
+entry = "designer feedback 2026-11-17: anticipation + overshoot keys; leg tips checked against the floor in Studio"
+exit = "designer feedback 2026-11-17: push up over the legs before standing; leg tips checked against the floor in Studio"
+sway = "designer feedback 2026-11-17 (too stiff): starting values"
+camera = "designer slide spec 2026-11-17: CameraOffset (0, -1.8, 0), FOV +10; faster tweens and tilt 2026-11-18 (snappy)"
+kick = "designer 2026-11-18: picked camera kick for a snappy slide, then asked to remove the snap or tone it way down: only a 1 degree FOV punch left"
+dust = "reference clip (dust behind the slide) + designer feedback (VFX not good): starting values, Roblox built-in smoke texture"
+debris = "reference clip: grey rock chips kicked up behind the feet; starting values"
+scrape = "designer feedback 2026-11-17 (VFX not good): starting values"
+streaks = "reference clip (white wind lines) + harvested Hit-03 Lines layer (rate 65, life 0.2-0.4, VelocityParallel, LightEmission 0.5), toned down"
+trail = "designer slide spec 2026-11-17: brief white wind trails on the limbs; thinner after feedback"
+sound = "designer feedback 2026-11-17 (no sound); start whoosh and exit step removed 2026-11-18 (designer: remove the pop going in and out); roblox-sfx search + Studio probe, all 26 candidates loaded; picked by listing, not heard: judge in play"
+net = "server rate limit (CLAUDE.md: validate every RemoteEvent); a slide is 2-3 messages, 0.8 s cooldown, so 6/s is double the most a real player sends"

@@ -23,6 +23,39 @@ return {
 		end
 	end,
 
+	["slide feel: numbers in range, every section has a source"] = function(t)
+		local f = t.rules("slide")
+		t.ok(f.timing.blendIn > 0 and f.timing.blendOut > 0 and f.timing.legLead >= 0, "timing")
+		t.ok(f.pose.rootY < 0, "the body drops")
+		t.ok(f.camera.offsetY < 0 and f.camera.fovAdd > 0, "camera goes down and wider")
+		t.ok(f.debris.minSize > 0 and f.debris.minSize <= f.debris.maxSize and f.debris.life > 0, "debris")
+		t.ok(f.debris.bounce >= 0 and f.debris.bounce < 1, "a bounce loses speed")
+		t.ok(f.dust.lifeMin <= f.dust.lifeMax and f.dust.ratePerSpeed > 0, "dust")
+		t.ok(f.trail.lifetime > 0 and f.trail.transparency >= 0 and f.trail.transparency < 1, "trail")
+		t.ok(f.sound.scrapePitchMin <= f.sound.scrapePitchMax, "scrape pitch range")
+		for _, key in { "scrapeId" } do
+			t.ok(type(f.sound[key]) == "number" and f.sound[key] > 0, "sound." .. key .. " is an asset id")
+		end
+		for i = 2, #f.entry do
+			t.ok(f.entry[i].t > f.entry[i - 1].t, "entry keys in time order")
+		end
+		for i = 2, #f.exit do
+			t.ok(f.exit[i].t > f.exit[i - 1].t, "exit keys in time order")
+		end
+		t.ok(f.net.maxPerSecond >= 2, "a whole slide (on + off) fits in the rate limit")
+		for name in f do
+			if name ~= "source" then
+				t.ok(type(f.source[name]) == "string", "[" .. name .. "] needs a source entry")
+			end
+		end
+	end,
+
+	["speed feel + vault chain: present and sane (details in speedfeel.spec / parkour.spec)"] = function(t)
+		local r, p = t.rules("speedfeel"), t.rules("parkour")
+		t.ok(r.fov.add > 0 and r.lines.rate > 0, "speed feel on")
+		t.ok(p.vaultChain.window > 0 and p.vaultChain.step > 0 and p.vaultChain.cap >= p.vaultChain.step, "vault chain")
+	end,
+
 	["character: widths in range, every one has a source"] = function(t)
 		local c = t.rules("character")
 		for _, k in { "torsoWidth", "armWidth", "legWidth", "headWidth" } do
