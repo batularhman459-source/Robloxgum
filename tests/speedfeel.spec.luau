@@ -49,4 +49,27 @@ return {
 		end
 		t.ok(math.abs(a - b) < 1e-6, "same after 1 s at 60 and 30 fps")
 	end,
+
+	["speed lines: straight radial lines, pointing at the centre, sliding outward, never in the middle"] = function(t)
+		local r = t.rules("speedfeel")
+		local l = r.lines
+		t.ok(l.innerMin >= 0.4, "the middle of the screen stays clear")
+		t.ok(l.fadeIn > 0 and l.fadeIn < 1 and l.thickness > 0, "fades in and out, has a thickness")
+		local w, h = 1366, 768
+		local half = math.sqrt(w * w + h * h) / 2
+		local line = { angle = math.rad(30), inner = l.innerMin, length = l.lengthMin, life = 0.2 }
+		local x0, y0, _, rot, tr0 = SpeedFeelMath.radialLine(r, line, 0, w, h)
+		local x1, y1, _, _, trMid = SpeedFeelMath.radialLine(r, line, 0.2 * l.fadeIn, w, h)
+		local x2, y2, _, _, tr2 = SpeedFeelMath.radialLine(r, line, 0.2, w, h)
+		t.ok(math.abs(rot - 30) < 1e-9, "rotated to point at the centre")
+		local function dist(x, y)
+			return math.sqrt((x - w / 2) ^ 2 + (y - h / 2) ^ 2)
+		end
+		t.ok(dist(x2, y2) > dist(x1, y1) and dist(x1, y1) > dist(x0, y0), "slides outward")
+		t.ok(math.abs(math.atan2(y2 - h / 2, x2 - w / 2) - line.angle) < 1e-9, "stays on its ray (straight)")
+		t.ok(dist(x0, y0) - l.lengthMin * half / 2 >= l.innerMin * half - 1e-6, "starts away from the centre")
+		t.eq(tr0, 1, "invisible when born")
+		t.ok(math.abs(trMid - l.transparency) < 1e-9, "fully shown after the fade in")
+		t.eq(tr2, 1, "gone at the end")
+	end,
 }

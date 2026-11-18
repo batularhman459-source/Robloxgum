@@ -2,47 +2,59 @@
 -- Sense of speed for this player (rules/speedfeel.toml, curves in src/shared/SpeedFeelMath.luau):
 --   * the field of view widens smoothly with horizontal speed. It is set fresh every frame right after Roblox's
 --     camera; the slide adds its own bit on top one step later (src/client/SlideFeel.luau);
---   * wind lines stream past the screen edges when fast: a particle ring on an invisible part held in front of the
---     camera, the lines flying towards and past it.
+--   * radial anime speed lines: thin straight lines drawn on the screen (a ScreenGui overlay, no assets), each
+--     pointing at the centre, spawning toward the edges, sliding outward and fading. How many follows the speed.
+--     (The first version used 3D particle streaks; the designer found them "like rain going all over the place".)
+-- This is an effect overlay, not a menu: it has no spec/preview by design (ui/ specs are for menus and HUDs).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local r = require(ReplicatedStorage:WaitForChild("Rules"):WaitForChild("speedfeel")) :: any
-local SpeedFeelMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SpeedFeelMath"))
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local SpeedFeelMath = require(Shared:WaitForChild("SpeedFeelMath"))
+local UiLayout = require(Shared:WaitForChild("ui"):WaitForChild("UiLayout")) :: any
+local theme = require(ReplicatedStorage:WaitForChild("UI"):WaitForChild("Themes"):WaitForChild("house")) :: any
 
 local player = Players.LocalPlayer
-
--- The wind-line ring: a thin invisible disc (a cylinder part, its axis along X), its emitter spawning on the rim
--- (Surface) and shooting the lines along the axis, which points back at the camera.
 local l = r.lines
-local ring = Instance.new("Part")
-ring.Name = "SpeedLines"
-ring.Shape = Enum.PartType.Cylinder
-ring.Size = Vector3.new(0.2, l.radius * 2, l.radius * 2)
-ring.Transparency = 1
-ring.Anchored, ring.CanCollide, ring.CanQuery, ring.CanTouch, ring.CastShadow = true, false, false, false, false
-local lines = Instance.new("ParticleEmitter")
-lines.Texture = l.texture
-lines.Rate = 0
-lines.Lifetime = NumberRange.new(l.lifeMin, l.lifeMax)
-lines.Speed = NumberRange.new(l.speedMin, l.speedMax)
-lines.Size = NumberSequence.new(l.width)
-lines.Squash = NumberSequence.new(l.squash)
-lines.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 1),
-	NumberSequenceKeypoint.new(0.2, l.transparency),
-	NumberSequenceKeypoint.new(1, 1),
-})
-lines.LightEmission = l.lightEmission
-lines.LightInfluence = 0
-lines.Orientation = Enum.ParticleOrientation.VelocityParallel
-lines.Shape = Enum.ParticleEmitterShape.Disc
-lines.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
-lines.EmissionDirection = Enum.NormalId.Right -- along the cylinder's axis, turned to face the camera below
-lines.LockedToPart = true -- the lines move with the camera, so they read as screen-space streaks
-lines.Parent = ring
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "SpeedLines"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = -1 -- under the HUD
+gui.Parent = player:WaitForChild("PlayerGui")
+
+type Line = { frame: Frame, angle: number, inner: number, length: number, life: number, age: number }
+local lines: { Line } = {}
+local pool: { Frame } = {}
+local spawnClock = 0
+
+local function newLine(): Line
+	local frame: Frame = table.remove(pool)
+		or (function(): Frame
+			local f = Instance.new("Frame")
+			f.AnchorPoint = Vector2.new(0.5, 0.5)
+			f.BackgroundColor3 = Color3.new(1, 1, 1)
+			f.BorderSizePixel = 0
+			f.Parent = gui
+			return f
+		end)()
+	frame.Visible = true
+	local function range(a: number, b: number): number
+		return a + math.random() * (b - a)
+	end
+	return {
+		frame = frame,
+		angle = math.random() * 2 * math.pi,
+		inner = range(l.innerMin, l.innerMax),
+		length = range(l.lengthMin, l.lengthMax),
+		life = range(l.lifeMin, l.lifeMax),
+		age = 0,
+	}
+end
 
 local fov = r.fov.base
 RunService:BindToRenderStep("SpeedFeel", Enum.RenderPriority.Camera.Value + 1, function(dt)
@@ -59,10 +71,32 @@ RunService:BindToRenderStep("SpeedFeel", Enum.RenderPriority.Camera.Value + 1, f
 	fov = SpeedFeelMath.follow(fov, r.fov.base + SpeedFeelMath.fovExtra(r, speed), dt, r.fov.smoothing)
 	camera.FieldOfView = fov
 
-	if ring.Parent ~= camera then
-		ring.Parent = camera
+	-- Lines: spawn at the speed's rate, move and fade the live ones, recycle the dead ones.
+	local size = gui.AbsoluteSize
+	local w, h = size.X, size.Y
+	if w <= 0 or h <= 0 then
+		return
 	end
-	-- In front of the camera, its axis (X) pointing back at the camera.
-	ring.CFrame = camera.CFrame * CFrame.new(0, 0, -l.distance) * CFrame.Angles(0, -math.pi / 2, 0)
-	lines.Rate = SpeedFeelMath.lineRate(r, speed)
+	local thickness = l.thickness * UiLayout.scaleFor(theme, w, h)
+	spawnClock += dt * SpeedFeelMath.lineRate(r, speed)
+	while spawnClock >= 1 do
+		spawnClock -= 1
+		table.insert(lines, newLine())
+	end
+	local keep = {}
+	for _, line in lines do
+		line.age += dt
+		if line.age >= line.life then
+			line.frame.Visible = false
+			table.insert(pool, line.frame)
+			continue
+		end
+		local cx, cy, length, rot, transparency = SpeedFeelMath.radialLine(r, line, line.age, w, h)
+		line.frame.Position = UDim2.fromOffset(cx, cy)
+		line.frame.Size = UDim2.fromOffset(length, thickness)
+		line.frame.Rotation = rot
+		line.frame.BackgroundTransparency = transparency
+		table.insert(keep, line)
+	end
+	lines = keep
 end)

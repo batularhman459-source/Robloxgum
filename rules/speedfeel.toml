@@ -1,5 +1,5 @@
 # Sense of speed (src/client/SpeedFeel.client.luau): the camera's field of view widens with how fast you move, and
-# faint wind lines stream past the screen edges when you are fast. Designer 2026-11-18: "sense of speed is missing a
+# straight anime speed lines appear at the screen edges when you are fast. Designer 2026-11-18: "sense of speed is missing a
 # bit in the cam", picked "FOV grows with speed" and "speed lines when fast". Speeds in studs/s (parkour.toml: sprint
 # 27, cap 45, slide burst 60).
 
@@ -11,23 +11,24 @@ add = 20                # degrees added at full speed (sprint 27 gives about +4,
 smoothing = 0.2         # seconds: the field of view follows speed this smoothly (no snaps)
 
 [lines]
-# Wind lines: Roblox's built-in sparkle texture stretched into streaks, spawned on a ring ahead of the camera and
-# flying past it, so they cross the screen edges and never the middle.
-texture = "rbxasset://textures/particles/sparkles_main.dds"
-fromSpeed = 22          # none below this; a few already at the 27 sprint (designer 2026-11-18: "show too late")
+# Radial anime speed lines (designer 2026-11-18: the 3D particle streaks looked "like rain going all over the place",
+# picked "radial anime lines"): thin, perfectly straight lines drawn on the screen, each pointing at the centre,
+# spawning toward the screen edge, sliding outward and fading. The centre stays clear. Distances are fractions of
+# half the screen diagonal (0 = centre, 1 = corner), so they look the same on every screen size.
+fromSpeed = 22          # none below this; a few already at the 27 sprint
 toSpeed = 46            # full rate from here
-rate = 150              # lines per second at full speed
-distance = 14           # studs ahead of the camera where they start
-radius = 9              # studs: the ring they start on
-lifeMin = 0.25
-lifeMax = 0.4
-speedMin = 55           # studs/s towards and past the camera
-speedMax = 80
-width = 0.35            # studs (0.07 -> 0.09 -> 0.16 -> 0.35: "too faint / thin"; the sparkle image has a thin core)
-squash = 10             # stretched into streaks along their motion
-transparency = 0.2
-lightEmission = 1
+rate = 60               # lines per second at full speed
+lifeMin = 0.16          # seconds a line lives
+lifeMax = 0.28
+innerMin = 0.55         # where a line's inner end starts (fraction of the half diagonal)
+innerMax = 0.8
+lengthMin = 0.18        # line length (fraction of the half diagonal)
+lengthMax = 0.35
+travel = 0.25           # how far a line slides outward over its life (fraction of the half diagonal)
+thickness = 2           # pixels at scale 1 (phone/laptop); grows with the screen like the UI does
+transparency = 0.25     # at its most visible (1 = invisible)
+fadeIn = 0.25           # share of its life spent fading in (the rest fades out)
 
 [source]
 fov = "designer 2026-11-18 picked FOV grows with speed; add 14 -> 20 the same day (designer: make the sense of speed stronger)"
-lines = "designer 2026-11-18 picked speed lines when fast; denser, brighter, earlier the same day (stronger sense of speed); then bolder and from 22 (too faint / thin, show too late)"
+lines = "designer 2026-11-18 picked speed lines when fast; denser, brighter, earlier the same day (stronger sense of speed); then bolder and from 22 (too faint / thin, show too late); rebuilt as radial screen lines the same day (designer: rain-like, wants straight clean lines)"

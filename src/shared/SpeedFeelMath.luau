@@ -23,4 +23,26 @@ function SpeedFeelMath.follow(current: number, target: number, dt: number, tau: 
 	return current + (target - current) * (1 - math.exp(-dt / tau))
 end
 
+-- One radial speed line at age t of its life: where it sits on the screen and how visible it is.
+-- line = { angle (radians), inner (0..1), length (0..1), life (s) }, w/h = screen size in pixels.
+-- Returns centre x, centre y (pixels), length (pixels), rotation (degrees), transparency (1 = invisible).
+function SpeedFeelMath.radialLine(
+	r: any,
+	line: any,
+	t: number,
+	w: number,
+	h: number
+): (number, number, number, number, number)
+	local l = r.lines
+	local half = math.sqrt(w * w + h * h) / 2
+	local u = math.clamp(t / line.life, 0, 1)
+	local inner = (line.inner + l.travel * u) * half
+	local length = line.length * half
+	local mid = inner + length / 2
+	local cx, cy = w / 2 + math.cos(line.angle) * mid, h / 2 + math.sin(line.angle) * mid
+	local vis = if u < l.fadeIn then u / l.fadeIn else (1 - u) / (1 - l.fadeIn)
+	local transparency = 1 - (1 - l.transparency) * math.clamp(vis, 0, 1)
+	return cx, cy, length, math.deg(line.angle), transparency
+end
+
 return SpeedFeelMath
