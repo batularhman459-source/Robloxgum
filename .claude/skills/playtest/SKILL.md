@@ -169,3 +169,6 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
 - To remove a speed boost, zeroing the gain is not enough: check every hand-off that carries a MEASURED speed into the sprint (the vault's eased push was still at 23 when it ended, so a 20 run-up left at 23). Log ParkourSpeed for ~1 s after the move (2026-11-18).
 - Two scripts writing Camera.FieldOfView fight (each snapping it back to its own base). One owner sets it fresh every frame (SpeedFeel, Camera+1); others ADD on top one render step later (SlideFeel, Camera+2) (2026-11-18).
 - A move that starts during another (vault during a slide) must cut the first one's procedural pose at once: its exit blend would otherwise draw over the new animation. Check torso drop at the switch frame (1.45 -> 0.00) (2026-11-18).
+- R6 needs a colliding part to stand: moving Torso + Head to a no-world collision group dropped the body through the map (HRP y 4 -> -217 in 1.5 s). For slide-under-gaps weld a small low collider and switch it on first (2026-11-18).
+- Never call CharacterAdded:Wait() in execute_luau when the character may already exist: it hangs the call, it timed out and Studio's MCP connection dropped (2026-11-18).
+- A 2 stud box is walk-over height for R6 (the Humanoid steps up anything near leg height), so 'did the wall stop the slide' needs a real wall (8 studs) (2026-11-18).

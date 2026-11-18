@@ -6,7 +6,7 @@ return {
 		local v = t.rules("vault")
 		t.ok(v.detect.minHeight < v.types.stepBelow, "a step vault is possible")
 		t.ok(
-			v.types.stepBelow < v.types.normalBelow and v.types.normalBelow < v.detect.maxHeight,
+			v.types.stepBelow < v.types.normalBelow and v.types.normalBelow <= v.detect.maxHeight,
 			"type bands in order"
 		)
 		t.ok(v.detect.facingDot > 0 and v.detect.facingDot <= 1, "facingDot 0..1")

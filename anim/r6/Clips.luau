@@ -13,15 +13,33 @@ local Clips = {}
 
 -- The designer's run (Evade Animations pack, imported into Studio 2026-11-15; dumped and rebuilt
 -- verbatim with tools/anim_from_json). 0.65 s loop, 25 keys.
-Clips.Run = { import = "EvadeRun.rbxm", sequence = "Run", loop = true, priority = "Movement" }
+Clips.Run = {
+	import = "EvadeRun.rbxm",
+	sequence = "Run",
+	loop = true,
+	priority = "Movement",
+	id = "rbxassetid://124107817748632", -- uploaded 2026-11-18 (designer approved)
+}
 
 -- The toolbox Vaulting System's clips (Creator Store model by RasyidFZ and PurpleShade198, inserted by the
 -- designer 2026-11-17), dumped from Studio and rebuilt verbatim with tools/anim_from_json. Played by
 -- src/client/Vault.client.luau. Its own Animation ids belong to another account and would not load in
--- this game once published, so these play from the data until they are uploaded under this account.
-Clips.StepVault = { import = "StepVaultAnimation.rbxm", sequence = "StepVaultAnimation", loop = false, priority = "Action" }
-Clips.NormalVault =
-	{ import = "NormalVaultAnimation.rbxm", sequence = "NormalVaultAnimation", loop = false, priority = "Action" }
+-- this game once published, so Step and Normal were uploaded under this account on 2026-11-18 (ids below).
+-- HighClimb is not uploaded: the high climb is off (rules/vault.toml maxHeight).
+Clips.StepVault = {
+	import = "StepVaultAnimation.rbxm",
+	sequence = "StepVaultAnimation",
+	loop = false,
+	priority = "Action",
+	id = "rbxassetid://139090871664396", -- uploaded 2026-11-18
+}
+Clips.NormalVault = {
+	import = "NormalVaultAnimation.rbxm",
+	sequence = "NormalVaultAnimation",
+	loop = false,
+	priority = "Action",
+	id = "rbxassetid://80967627624275", -- uploaded 2026-11-18
+}
 Clips.HighClimb = { import = "HighClimbAnimation.rbxm", sequence = "HighClimbAnimation", loop = false, priority = "Action" }
 
 return Clips

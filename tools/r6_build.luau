@@ -174,5 +174,14 @@ for _, name in names do
 	)
 end
 
+-- Uploaded clips: the asset id goes on the sequence as its AnimationId attribute; the game prefers it over playing
+-- the sequence data (which only works inside Studio).
+for _, seq in folder:GetChildren() do
+	local clip = Clips[seq.Name]
+	if clip and clip.id then
+		seq:SetAttribute("AnimationId", clip.id)
+		print(string.format("%-10s uploaded as %s", seq.Name, clip.id))
+	end
+end
 fs.writeFile("src/client/Anims.rbxm", roblox.serializeModel({ folder }))
 print("wrote src/client/Anims.rbxm")

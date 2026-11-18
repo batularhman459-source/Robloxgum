@@ -4,8 +4,8 @@
 --   require(game:GetService("ReplicatedStorage").DevTools.VaultCourse:Clone()).build()
 -- or build(Vector3.new(x, y, z)) to put it somewhere else. Every lane runs along -Z: start on the blue pad,
 -- hold W, press Space near the obstacle. A sign at each start says what the lane tests and what should happen.
--- Heights are measured from the floor (the vault measures from the feet): step 1-2, normal 2-4, high 4-4.5,
--- nothing above 4.5 (rules/vault.toml).
+-- Heights are measured from the floor (the vault measures from the feet): step 1-2, normal 2-4, nothing
+-- above 4.0 (rules/vault.toml; the high climb is off for now).
 local CollectionService = game:GetService("CollectionService")
 local Workspace = game:GetService("Workspace")
 
@@ -25,8 +25,8 @@ VaultCourse.LANES = {
 	{ name = "Normal 2", size = Vector3.new(6, 2, 1.5), expect = "normal vault (the small ledge)" },
 	{ name = "Normal 3", size = Vector3.new(6, 3, 1.5), expect = "normal vault" },
 	{ name = "Deep 3 x 4", size = Vector3.new(6, 3, 4), expect = "normal vault over a deep box" },
-	{ name = "High 4.3", size = Vector3.new(6, 4.3, 1.5), expect = "high climb (the tallest vault)" },
-	{ name = "Ledge 5", size = Vector3.new(6, 5, 1.5), expect = "over the 4.5 cap: no vault" },
+	{ name = "Ledge 4.3", size = Vector3.new(6, 4.3, 1.5), expect = "over the 4.0 cap: no vault (high climb off)" },
+	{ name = "Ledge 5", size = Vector3.new(6, 5, 1.5), expect = "over the cap: no vault" },
 	{ name = "Wall 8", size = Vector3.new(6, 8, 1.5), expect = "too tall: no vault, you stop" },
 	{ name = "Post 2", size = Vector3.new(1.5, 2, 1.5), expect = "narrow post: vault only if aimed at it" },
 	{ name = "Chain 3x2", size = Vector3.new(6, 2, 1.5), expect = "three ledges in a row", count = 3, gap = 9 },

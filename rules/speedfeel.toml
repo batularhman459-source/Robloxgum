@@ -14,20 +14,20 @@ smoothing = 0.2         # seconds: the field of view follows speed this smoothly
 # Wind lines: Roblox's built-in sparkle texture stretched into streaks, spawned on a ring ahead of the camera and
 # flying past it, so they cross the screen edges and never the middle.
 texture = "rbxasset://textures/particles/sparkles_main.dds"
-fromSpeed = 28          # none below this (just above the 27 sprint, so plain running stays clean)
+fromSpeed = 22          # none below this; a few already at the 27 sprint (designer 2026-11-18: "show too late")
 toSpeed = 46            # full rate from here
-rate = 120              # lines per second at full speed
+rate = 150              # lines per second at full speed
 distance = 14           # studs ahead of the camera where they start
 radius = 9              # studs: the ring they start on
-lifeMin = 0.18
-lifeMax = 0.3
+lifeMin = 0.25
+lifeMax = 0.4
 speedMin = 55           # studs/s towards and past the camera
 speedMax = 80
-width = 0.09            # studs
-squash = 8              # stretched into streaks along their motion
-transparency = 0.4
-lightEmission = 0.8
+width = 0.35            # studs (0.07 -> 0.09 -> 0.16 -> 0.35: "too faint / thin"; the sparkle image has a thin core)
+squash = 10             # stretched into streaks along their motion
+transparency = 0.2
+lightEmission = 1
 
 [source]
 fov = "designer 2026-11-18 picked FOV grows with speed; add 14 -> 20 the same day (designer: make the sense of speed stronger)"
-lines = "designer 2026-11-18 picked speed lines when fast; denser, brighter, earlier the same day (stronger sense of speed)"
+lines = "designer 2026-11-18 picked speed lines when fast; denser, brighter, earlier the same day (stronger sense of speed); then bolder and from 22 (too faint / thin, show too late)"

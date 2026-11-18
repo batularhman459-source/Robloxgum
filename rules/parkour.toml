@@ -7,17 +7,20 @@
 base = 27               # auto-sprint speed when not chaining (20 -> 24 -> 27; designer 2026-11-18: faster, then "a bit more")
 max = 45                # cap from chaining moves (34 -> 40 -> 45)
 flowGrace = 1.2         # seconds after the last move before speed starts falling back
-decayPerSecond = 6      # how fast speed falls back towards base after flowGrace
+decayPerSecond = 7.5    # how fast speed falls back towards base after flowGrace (6 at 20/34: scaled with the
+                        # wider 27/45 range so falling from the cap takes about as long, 2026-11-18)
 bonkFactor = 0.55       # running straight into a wall keeps this share of speed
 
 [gain]
 # Speed added when a move is done (up to speed.max). Repeating the SAME move in a row gains less:
 # each repeat multiplies the gain by repeatFactor, so flow means mixing moves.
-slide = 2
-wallRun = 3
-wallJump = 3
-landRoll = 2
-doubleJump = 1
+# Scaled x1.3 on 2026-11-18 with the wider speed range (14 -> 18 between sprint and cap), so the same flow
+# of moves still reaches the cap (were 2, 3, 3, 2, 1).
+slide = 2.5
+wallRun = 4
+wallJump = 4
+landRoll = 2.5
+doubleJump = 1.5
 slideJump = 0           # Space during a slide: no speed gain (designer 2026-11-18: remove the huge boost; was 3)
 slideCancel = 0         # C again during a slide: no speed gain (designer 2026-11-18: no boost from cancelling)
 vault = 0               # a toolbox vault: no speed gain (designer 2026-11-18: no boost from vaulting; was 2)
@@ -36,6 +39,9 @@ duration = 0.75         # the burst decays back to the sprint speed over this lo
 minSpeed = 22           # slower than this and slide does nothing; a slide this slow ends (uphill). Was 16: with the
                         # 27 sprint an uphill slide never got that slow, so it never ended early (2026-11-18)
 height = 2.5            # body height while sliding (fits under gaps this low + margin)
+colliderWidth = 1.8     # R6 slide collider (studs): while sliding, the torso and head stop colliding with the world
+colliderHeight = 1.4    # and this small box low at the hips takes over (holds the body up, still hits walls), so
+colliderLift = 0.4      # the slide fits under low gaps. Its top (lift + height) must stay under height - clearance.
 cooldown = 0.8
 burstSpeed = 60         # top slide speed, reached burstRise seconds after the press
 burstRise = 0.06        # eases up to burstSpeed this fast (no single-frame snap)
@@ -63,7 +69,8 @@ sameWallCooldown = 0.6  # can't restart on the same wall right after leaving it
 
 [wallJump]
 height = 6              # jump height off a wall
-push = 24               # sideways speed away from the wall
+push = 32               # sideways speed away from the wall (24 at the 20 sprint; scaled with the 27 sprint so the
+                        # jump-off angle stays about the same, 2026-11-18)
 allowBurst = 1          # 1 = run speed + push may briefly go over speed.max (punchy burst), 0 = clamp to max
 
 [landing]
@@ -86,6 +93,6 @@ gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
 slide = "game rule; minHip/clearance/gapMargin for the real slide (M2); designer slide spec 2026-11-17: burst 55 (60 from 2026-11-18, with the faster sprint) decaying over ~0.75 s, slope momentum, trigger above 16, cooldown 0.8, Space = jump-boost; jumpHeight = movement.jumpHeight; cancelAfter 2026-11-18 (slide cancel)"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
-wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15"
+wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15; push 24 -> 32 with the 27 sprint (2026-11-18)"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"
 vaultChain = "designer 2026-11-18: from the 2nd vault within 2 s, +1.5 each, up to +6"

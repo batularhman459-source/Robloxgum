@@ -71,6 +71,21 @@ local function onCharacter(char: Model)
 			table.insert(upperParts, part)
 		end
 	end
+	local slideCollider: BasePart? = nil
+	if hum.RigType == Enum.HumanoidRigType.R6 then
+		local c = Instance.new("Part")
+		c.Name = "SlideCollider"
+		c.Size = Vector3.new(p.slide.colliderWidth, p.slide.colliderHeight, p.slide.colliderWidth)
+		c.Transparency = 1
+		c.CanCollide, c.CanQuery, c.CanTouch, c.Massless, c.CastShadow = false, false, false, true, false
+		local floorY = -(hrp.Size.Y / 2 + sensors:legLength())
+		c.CFrame = hrp.CFrame * CFrame.new(0, floorY + p.slide.colliderLift + p.slide.colliderHeight / 2, 0)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0, weld.Part1 = hrp, c
+		weld.Parent = c
+		c.Parent = char
+		slideCollider = c
+	end
 	local low = false
 	local function setLow(on: boolean)
 		if on == low then
@@ -81,10 +96,20 @@ local function onCharacter(char: Model)
 			feel:set(on)
 		end
 		SlideState:FireServer(on) -- so the other players see the slide too
-		-- R15 only for now: R6 ignores HipHeight (it would raise the body) and its only colliding parts
-		-- are Torso and Head, so removing them from collision would drop it through the floor. The R6
-		-- slide-under-gaps (a small low collider) is a planned rebuild.
-		if hum.RigType == Enum.HumanoidRigType.R15 then
+		-- R6 (2026-11-18): its only colliding parts are Torso and Head (taking them out of collision alone dropped
+		-- the body through the world, measured), so a small collider low at the hips takes over while sliding:
+		-- it holds the body up and still hits walls, and the slide fits under low gaps.
+		if slideCollider then
+			if on then
+				slideCollider.CanCollide = true
+			end
+			for _, part in upperParts do
+				part.CollisionGroup = if on then "SlideBody" else "Default"
+			end
+			if not on then
+				slideCollider.CanCollide = false
+			end
+		elseif hum.RigType == Enum.HumanoidRigType.R15 then
 			hum.HipHeight = if on then lowHip else standHip
 			for _, part in upperParts do
 				part.CollisionGroup = if on then "SlideBody" else "Default"

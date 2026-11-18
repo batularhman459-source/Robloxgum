@@ -97,6 +97,14 @@ return {
 		t.eq(s.vaultChain, 1)
 	end,
 
+	["slide: the R6 slide collider fits under the slide height"] = function(t)
+		local p = t.rules("parkour")
+		local sl = p.slide
+		t.ok(sl.colliderLift > 0, "off the floor (no scraping)")
+		t.ok(sl.colliderLift + sl.colliderHeight <= sl.height - sl.clearance, "its top stays under the slide height")
+		t.ok(sl.colliderWidth > 0, "has a width")
+	end,
+
 	["momentum: capped at max, never below base"] = function(t)
 		local p, _, s = setup(t)
 		for _ = 1, 50 do

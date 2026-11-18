@@ -4,7 +4,7 @@ return {
 	["speed feel numbers: in order, sprint calm, never excessive"] = function(t)
 		local r, p = t.rules("speedfeel"), t.rules("parkour")
 		t.ok(r.fov.fromSpeed < r.fov.toSpeed and r.lines.fromSpeed < r.lines.toSpeed, "ranges in order")
-		t.ok(r.lines.fromSpeed > p.speed.base, "no lines at plain sprint speed")
+		t.ok(SpeedFeelMath.lineRate(r, p.speed.base) < r.lines.rate * 0.25, "only a few lines at plain sprint speed")
 		t.ok(r.fov.base + r.fov.add <= 90, "field of view stays sane")
 		t.ok(r.fov.smoothing > 0, "smoothed, no snaps")
 		for name in r do
@@ -31,9 +31,10 @@ return {
 		t.ok(worst < r.fov.add / 5, "no jumps per stud/s")
 	end,
 
-	["speed feel: lines only when fast"] = function(t)
+	["speed feel: lines grow with speed"] = function(t)
 		local r, p = t.rules("speedfeel"), t.rules("parkour")
-		t.eq(SpeedFeelMath.lineRate(r, p.speed.base), 0, "none at sprint")
+		t.eq(SpeedFeelMath.lineRate(r, r.lines.fromSpeed), 0, "none below fromSpeed")
+		t.ok(SpeedFeelMath.lineRate(r, p.speed.max) > SpeedFeelMath.lineRate(r, p.speed.base), "more when faster")
 		t.eq(SpeedFeelMath.lineRate(r, r.lines.toSpeed), r.lines.rate, "full at toSpeed")
 	end,
 

@@ -5,7 +5,8 @@
 [detect]
 forwardDistance = 7     # how far ahead the hitbox reaches (studs)
 minHeight = 1.0         # obstacle top above the ground under the feet: lower is just stepped over (was 0.5 above the root part)
-maxHeight = 4.5         # higher is not a vault (above the ground): walls and high ledges are ignored
+maxHeight = 4.0         # higher is not a vault (above the ground). = normalBelow: the high climb is OFF for now
+                        # (designer 2026-11-18: remove high-speed climbing); 4.5 brings it back for 4.0-4.5
                         # (designer 2026-11-17: never get locked into a climb; was 6.5)
 hitboxWidth = 4
 hitboxHeight = 6
@@ -34,7 +35,7 @@ settle = 0.1            # the last this-many seconds ease forward speed down to 
 maxOverrun = 0.3        # the vault may run this much past its clip while the body is still over the obstacle
 
 [source]
-detect = "toolbox Vaulting System SETTINGS (RasyidFZ / PurpleShade198), inserted by the designer 2026-11-17; maxHeight 6.5 -> 4.5 (designer: strict cap, no climbs on walls); groundProbe added (a 5 stud ledge got through measured from mid-jump feet)"
+detect = "toolbox Vaulting System SETTINGS (RasyidFZ / PurpleShade198), inserted by the designer 2026-11-17; maxHeight 6.5 -> 4.5 (designer: strict cap, no climbs on walls) -> 4.0 on 2026-11-18 (designer: remove the high climb for now); groundProbe added (a 5 stud ledge got through measured from mid-jump feet)"
 types = "toolbox Vaulting System bands, re-based on the ground under the feet 2026-11-17 (step 1-2, normal 2-4, high 4-4.5 studs)"
 push = "toolbox Vaulting System: its velocity pushes and timing; atDistance added 2026-11-17 (vault keeps run-up speed, so a timed push came ~2.4 studs late and the feet clipped the top)"
 feel = "designer 2026-11-17: the speed boost felt choppy, too instant (20 -> 60 -> 22 in single frames); maxOverrun: the step vault ended inside its box and was bumped up"
