@@ -6,8 +6,10 @@
 [speed]
 base = 27               # auto-sprint speed when not chaining (20 -> 24 -> 27; designer 2026-11-18: faster, then "a bit more")
 max = 45                # cap from chaining moves (34 -> 40 -> 45)
-flowGrace = 1.2         # seconds after the last move before speed starts falling back
-decayPerSecond = 7.5    # how fast speed falls back towards base after flowGrace (6 at 20/34: scaled with the
+flowGrace = 2           # seconds after the last move before speed starts falling back (1.2 until 2026-11-18:
+                        # designer "you bleed a lot of speed", picked "longer")
+decayPerSecond = 3.75   # how fast speed falls back towards base after flowGrace (halved 2026-11-18, same request;
+                        # was 7.5, and 6 at 20/34: scaled with the
                         # wider 27/45 range so falling from the cap takes about as long, 2026-11-18)
 bonkFactor = 0.55       # running straight into a wall keeps this share of speed
 
@@ -74,7 +76,9 @@ push = 32               # sideways speed away from the wall (24 at the 20 sprint
 allowBurst = 1          # 1 = run speed + push may briefly go over speed.max (punchy burst), 0 = clamp to max
 
 [landing]
-safeHeight = 12         # falls up to this cost nothing
+safeHeight = 18         # falls up to this cost nothing. Was 12: a double jump from the top of a jump peaks at
+                        # ~12.2 and landed "hard" (speed halved + 0.35 s stop), designer 2026-11-18. Must stay above
+                        # movement.jumpHeight + jump.doubleJumpHeight (test), so your own jumps never land hard.
 rollWindow = 0.25       # press slide this long before landing to roll
 rollMaxHeight = 30      # a roll can save falls up to this (matches movement.toml maxSafeFall)
 hardSpeedFactor = 0.5   # hard landing keeps this share of speed
@@ -94,5 +98,5 @@ jump = "game rule: starting values; coyote/buffer are common platformer defaults
 slide = "game rule; minHip/clearance/gapMargin for the real slide (M2); designer slide spec 2026-11-17: burst 55 (60 from 2026-11-18, with the faster sprint) decaying over ~0.75 s, slope momentum, trigger above 16, cooldown 0.8, Space = jump-boost; jumpHeight = movement.jumpHeight; cancelAfter 2026-11-18 (slide cancel)"
 wallRun = "game rule; gravityFactor, minHeight, entryUpSpeed, maxSlideDownSpeed tuned in playtest 2026-11-15"
 wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15; push 24 -> 32 with the 27 sprint (2026-11-18)"
-landing = "game rule: rollMaxHeight = movement.toml maxSafeFall"
+landing = "game rule: rollMaxHeight = movement.toml maxSafeFall; safeHeight 12 -> 18 on 2026-11-18 (double-jump landings stopped you)"
 vaultChain = "designer 2026-11-18: from the 2nd vault within 2 s, +1.5 each, up to +6"

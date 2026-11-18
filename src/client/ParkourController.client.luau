@@ -15,6 +15,7 @@ local m = require(Rules:WaitForChild("movement")) :: any
 local Parkour = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Parkour"))
 local SlideMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SlideMath"))
 local SlideFeel = require(script.Parent:WaitForChild("SlideFeel"))
+local FlipFeel = require(script.Parent:WaitForChild("FlipFeel"))
 local SlideState = ReplicatedStorage:WaitForChild("SlideState") :: RemoteEvent -- src/server/SlideNet.server.luau
 local Sensors = require(script.Parent:WaitForChild("ParkourSensors"))
 local ParkourAnims = require(script.Parent:WaitForChild("ParkourAnims"))
@@ -47,6 +48,7 @@ local function onCharacter(char: Model)
 	-- momentum. nil when not sliding. Its look: SlideFeel (pose, camera, rock chips, wind trails).
 	local slide: SlideMath.Slide? = nil
 	local feel = SlideFeel.new(char, hum, hrp, true)
+	local flip = FlipFeel.new(char, hum, hrp) -- the double jump's frontflip (designer 2026-11-18)
 	local groundParams = RaycastParams.new()
 	groundParams.FilterType = Enum.RaycastFilterType.Exclude
 	groundParams.FilterDescendantsInstances = { char }
@@ -193,6 +195,10 @@ local function onCharacter(char: Model)
 		elseif kind == "doubleJump" then
 			s.airJumpsUsed += 1
 			Parkour.applyMove(p, s, "doubleJump")
+			if flip then
+				flip:play()
+			end
+			SlideState:FireServer("flip") -- other players see the flip too
 			hrp.AssemblyLinearVelocity = Vector3.new(v.X, Parkour.jumpVelocity(m, p.jump.doubleJumpHeight), v.Z)
 			peakY = hrp.Position.Y
 			setMove("doubleJump")
@@ -436,6 +442,9 @@ local function onCharacter(char: Model)
 		vaultEndConn:Disconnect()
 		if feel then
 			feel:destroy()
+		end
+		if flip then
+			flip:destroy()
 		end
 	end
 	hum.Died:Connect(disconnectAll)

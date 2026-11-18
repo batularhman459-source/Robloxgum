@@ -19,7 +19,7 @@ local limits: { [Player]: RateLimit.Limit } = {}
 
 -- msg: true / false (sliding or not), or "jump" (the slide jump: other clients play its whoosh).
 remote.OnServerEvent:Connect(function(player: Player, msg: unknown)
-	if typeof(msg) ~= "boolean" and msg ~= "jump" and msg ~= "cut" then
+	if typeof(msg) ~= "boolean" and msg ~= "jump" and msg ~= "cut" and msg ~= "flip" then
 		return
 	end
 	local limit = limits[player]
@@ -37,6 +37,9 @@ remote.OnServerEvent:Connect(function(player: Player, msg: unknown)
 	end
 	if msg == "jump" then
 		char:SetAttribute("SlideJumps", ((char:GetAttribute("SlideJumps") :: number?) or 0) + 1)
+	elseif msg == "flip" then
+		-- a double jump's frontflip: other clients play it (src/client/FlipFeel.luau)
+		char:SetAttribute("Flips", ((char:GetAttribute("Flips") :: number?) or 0) + 1)
 	elseif msg == "cut" then
 		-- a vault cut the slide: other clients drop the slide pose at once instead of playing its exit
 		char:SetAttribute("SlideCuts", ((char:GetAttribute("SlideCuts") :: number?) or 0) + 1)

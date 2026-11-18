@@ -56,6 +56,11 @@ return {
 		t.ok(p.vaultChain.window > 0 and p.vaultChain.step > 0 and p.vaultChain.cap >= p.vaultChain.step, "vault chain")
 	end,
 
+	["flip: present (details in flip.spec)"] = function(t)
+		local r = t.rules("flip")
+		t.ok(#r.keys >= 2 and r.timing.blendIn > 0, "flip keys and timing")
+	end,
+
 	["character: widths in range, every one has a source"] = function(t)
 		local c = t.rules("character")
 		for _, k in { "torsoWidth", "armWidth", "legWidth", "headWidth" } do

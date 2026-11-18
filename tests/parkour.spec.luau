@@ -26,6 +26,10 @@ return {
 		t.ok(p.wallRun.minSpeed <= p.speed.base, "auto-sprint alone is fast enough to wall run")
 		t.ok(p.slide.height < m.characterHeight, "slide makes you smaller")
 		t.ok(p.landing.safeHeight < p.landing.rollMaxHeight, "safe < roll limit")
+		t.ok(
+			p.landing.safeHeight >= m.jumpHeight + p.jump.doubleJumpHeight + 2,
+			"your own jump + double jump never lands hard (designer 2026-11-18: double-jump landings stopped you)"
+		)
 		t.ok(p.wallJump.allowBurst == 0 or p.wallJump.allowBurst == 1, "allowBurst is a 0/1 switch")
 		t.ok(
 			p.gain.maxRefresh >= 1 and p.gain.maxRefresh == math.floor(p.gain.maxRefresh),

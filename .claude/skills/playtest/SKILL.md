@@ -173,3 +173,5 @@ Don't fix anything during the playtest. List what looks wrong and ask before cha
 - Never call CharacterAdded:Wait() in execute_luau when the character may already exist: it hangs the call, it timed out and Studio's MCP connection dropped (2026-11-18).
 - A 2 stud box is walk-over height for R6 (the Humanoid steps up anything near leg height), so 'did the wall stop the slide' needs a real wall (8 studs) (2026-11-18).
 - Speed lines as 3D particles flying past the camera read as rain (random screen directions as the camera turns). Straight radial screen-space Frames (ScreenGui, rotated toward the centre) read as clean anime lines (2026-11-18).
+- To screenshot a camera you set by script in play, bind it with BindToRenderStep at RenderPriority.Last: setting CameraType Scriptable once is overridden by the camera scripts (2026-11-18).
+- A landing rule tuned before a new jump existed can punish it: double jump at the top of a jump peaks ~12.2 > safeHeight 12, so it 'sometimes' landed hard (half speed + 0.35 s stop). Tie safe heights to your own max jump with a test (2026-11-18).

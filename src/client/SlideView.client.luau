@@ -1,10 +1,12 @@
 --!strict
--- Draws OTHER players' slides on this client (pose, wind trails, rock chips: SlideFeel). Their "Sliding"
+-- Draws OTHER players' slides (pose, wind trails, rock chips: SlideFeel) and double-jump flips (FlipFeel) on this
+-- client. Their "Sliding"
 -- attribute is set by the server (src/server/SlideNet.server.luau). This player's own slide is driven straight
 -- from ParkourController, with no network delay, so it is skipped here.
 local Players = game:GetService("Players")
 
 local SlideFeel = require(script.Parent:WaitForChild("SlideFeel"))
+local FlipFeel = require(script.Parent:WaitForChild("FlipFeel"))
 
 local function watch(char: Model)
 	local hum = char:WaitForChild("Humanoid", 10)
@@ -23,11 +25,21 @@ local function watch(char: Model)
 	local cutConn = char:GetAttributeChangedSignal("SlideCuts"):Connect(function()
 		feel:interrupt()
 	end)
+	local flip = FlipFeel.new(char, hum, hrp)
+	local flipConn = char:GetAttributeChangedSignal("Flips"):Connect(function()
+		if flip then
+			flip:play()
+		end
+	end)
 	update()
 	char.AncestryChanged:Connect(function(_, parent)
 		if not parent then
 			conn:Disconnect()
 			cutConn:Disconnect()
+			flipConn:Disconnect()
+			if flip then
+				flip:destroy()
+			end
 			feel:destroy()
 		end
 	end)
