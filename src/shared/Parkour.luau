@@ -215,6 +215,13 @@ function Parkour.slideBuffered(p: any, pressedAt: number?, now: number): boolean
 	return pressedAt ~= nil and now - pressedAt >= 0 and now - pressedAt <= p.slide.bufferTime
 end
 
+-- The run clip's playback speed at a running speed: grows runAnim.scale as fast as the speed does above the base,
+-- never past runAnim.max (designer 2026-11-19: limbs must not move really fast when you speed up).
+function Parkour.runAnimSpeed(p: any, speed: number): number
+	local a = p.runAnim
+	return math.clamp(1 + (speed / p.speed.base - 1) * a.scale, 1, a.max)
+end
+
 function Parkour.canSlide(p: any, s: State): boolean
 	return s.grounded and s.speed >= p.slide.minSpeed and s.sinceSlide >= p.slide.cooldown
 end

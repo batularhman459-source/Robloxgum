@@ -78,15 +78,17 @@ offsetY = -1.0          # Humanoid.CameraOffset while sliding (studs); was -1.8 
 fovAdd = 4              # Field of view bump while sliding (degrees); was 10
 tweenIn = 0.3           # eases in, no snap (was 0.08)
 tweenOut = 0.35         # was 0.2
-tilt = 0                # degrees of camera roll held while sliding (was 2)
+tilt = 2.5              # degrees of camera roll held while sliding (2 -> 0 -> 4 -> 2.5: designer 2026-11-19 wants camera
+                        # that fits the wall run, medium; then toned down a bit)
 
 [kick]
 # The camera kick on impact (designer 2026-11-18 picked "camera kick" for snappy): a quick punch that settles.
 time = 0.28             # seconds the kick lasts
 attack = 0.03           # seconds to its peak
-fovPunch = 1           # extra field of view at the peak (degrees); was 7 (designer 2026-11-18: tone the snap way down)
-roll = 0                # extra camera roll at the peak (degrees); was 5
-shake = 0               # camera shake at the peak (studs); was 0.12
+fovPunch = 2.5          # extra field of view at the peak (degrees); 7 -> 1 (2026-11-18: tone the snap way down) -> 4 -> 2.5
+                        # (2026-11-19: medium, to fit the wall run)
+roll = 2                # extra camera roll at the peak (degrees); 5 -> 0 -> 3 -> 2
+shake = 0.02            # camera shake at the peak (studs); 0.12 -> 0 -> 0.04 -> 0.02
 cancelScale = 0.6       # a slide cancel kicks this much (of the above)
 
 [dust]

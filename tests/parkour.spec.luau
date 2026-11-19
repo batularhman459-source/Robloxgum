@@ -320,19 +320,30 @@ return {
 		t.ok(not Parkour.slideBuffered(p, nil, 10), "not pressed")
 	end,
 
+	["run animation: normal at the sprint, a little faster when fast, never past the cap"] = function(t)
+		local p = t.rules("parkour")
+		t.eq(Parkour.runAnimSpeed(p, p.speed.base), 1, "1x at the sprint")
+		local fast = Parkour.runAnimSpeed(p, p.speed.max)
+		t.ok(fast > 1 and fast <= p.runAnim.max, string.format("%.2fx at the cap", fast))
+		t.ok(fast - 1 < p.speed.max / p.speed.base - 1, "grows slower than the speed")
+		t.eq(Parkour.runAnimSpeed(p, 1000), p.runAnim.max, "capped")
+		t.eq(Parkour.runAnimSpeed(p, 0), 1, "never slower than normal")
+	end,
+
 	["landing: safe, rolled and hard"] = function(t)
 		local p, _, s = setup(t)
-		s.speed = 28
+		local run = p.speed.base + 4 -- from the rules (it was a fixed 28, below the 30 sprint)
+		s.speed = run
 		-- a fall between the safe height and the roll limit (from the rules, not a fixed 20: safeHeight moved
 		-- 12 -> 18 -> 24 -> 29)
 		local high = (p.landing.safeHeight + p.landing.rollMaxHeight) / 2
 		t.eq((Parkour.landing(p, s, p.landing.safeHeight, nil)), "soft")
 		local kind, speed = Parkour.landing(p, s, high, p.landing.rollWindow * 0.5)
 		t.eq(kind, "roll")
-		t.ok(speed > 28, "a roll keeps and adds speed")
+		t.ok(speed > run, "a roll keeps and adds speed")
 		kind, speed = Parkour.landing(p, s, high, nil)
 		t.eq(kind, "hard")
-		t.eq(speed, 28 * p.landing.hardSpeedFactor, "hard landing halves speed")
+		t.eq(speed, run * p.landing.hardSpeedFactor, "hard landing halves speed")
 		t.eq((Parkour.landing(p, s, high, p.landing.rollWindow * 2)), "hard", "roll pressed too early")
 		t.eq((Parkour.landing(p, s, p.landing.rollMaxHeight + 5, 0.1)), "hard", "too high to roll")
 	end,

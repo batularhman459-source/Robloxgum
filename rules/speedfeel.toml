@@ -15,8 +15,8 @@ smoothing = 0.2         # seconds: the field of view follows speed this smoothly
 # picked "radial anime lines"): thin, perfectly straight lines drawn on the screen, each pointing at the centre,
 # spawning toward the screen edge, sliding outward and fading. The centre stays clear. Distances are fractions of
 # half the screen diagonal (0 = centre, 1 = corner), so they look the same on every screen size.
-fromSpeed = 22          # none below this; a few already at the 27 sprint
-toSpeed = 46            # full rate from here
+fromSpeed = 25          # none below this; a few already at the 30 sprint (22 at the 27 sprint)
+toSpeed = 50            # full rate from here (46 at the 27 sprint)
 rate = 60               # lines per second at full speed
 lifeMin = 0.16          # seconds a line lives
 lifeMax = 0.28

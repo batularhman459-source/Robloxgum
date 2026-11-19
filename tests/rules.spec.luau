@@ -78,6 +78,18 @@ return {
 		end
 	end,
 
+	["camera kicks: every kick sane, softer than the wall run, every section has a source"] = function(t)
+		local c, w = t.rules("camera"), t.rules("wallrun")
+		for _, name in { "vault", "flip", "land" } do
+			local k = c[name]
+			t.ok(k.attack > 0 and k.attack < k.time, name .. ": attack inside the kick")
+			t.ok(k.fov >= 0 and k.dip >= 0 and k.shake >= 0, name .. ": no negative strengths")
+			t.ok(k.roll < w.camera.tiltAngle, name .. ": rolls less than the wall run tilts (medium)")
+			t.ok(type(c.source[name]) == "string", name .. " needs a source")
+		end
+		t.ok(c.land.minFall < c.land.fullFall, "landing kick range")
+	end,
+
 	["character: widths in range, every one has a source"] = function(t)
 		local c = t.rules("character")
 		for _, k in { "torsoWidth", "armWidth", "legWidth", "headWidth" } do

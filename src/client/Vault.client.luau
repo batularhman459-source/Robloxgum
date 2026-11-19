@@ -24,6 +24,7 @@ local Workspace = game:GetService("Workspace")
 local VaultMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("VaultMath"))
 local v = require(ReplicatedStorage:WaitForChild("Rules"):WaitForChild("vault")) :: any
 local parkourRules = require(ReplicatedStorage:WaitForChild("Rules"):WaitForChild("parkour")) :: any
+local CameraKick = require(script.Parent:WaitForChild("CameraKick"))
 
 local player = Players.LocalPlayer
 
@@ -185,6 +186,7 @@ local function onCharacter(character: Model)
 				forward, up = p.highForward, p.highUp
 			end
 			peakSpeed = VaultMath.peakSpeed(forward, entrySpeed)
+			CameraKick.kick("vault") -- designer 2026-11-19: camera that fits the wall run
 			-- the forward part eases up from the run-up speed (below); the up kick is the push's own
 			rootPart.AssemblyLinearVelocity = forwardDir * entrySpeed + Vector3.new(0, up, 0)
 		end

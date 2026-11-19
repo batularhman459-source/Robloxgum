@@ -4,8 +4,9 @@
 # Jump height and gravity live in movement.toml (shared with the map checks).
 
 [speed]
-base = 27               # auto-sprint speed when not chaining (20 -> 24 -> 27; designer 2026-11-18: faster, then "a bit more")
-max = 45                # cap from chaining moves (34 -> 40 -> 45)
+base = 30               # auto-sprint speed when not chaining (20 -> 24 -> 27 -> 30; designer 2026-11-19: "the default
+                        # running before any speed boosts is a bit slow")
+max = 48                # cap from chaining moves (34 -> 40 -> 45 -> 48: same chain range on top of the new base)
 flowGrace = 2           # seconds after the last move before speed starts falling back (1.2 until 2026-11-18:
                         # designer "you bleed a lot of speed", picked "longer")
 decayPerSecond = 3.75   # how fast speed falls back towards base after flowGrace (halved 2026-11-18, same request;
@@ -92,8 +93,14 @@ window = 2.0
 step = 1.5
 cap = 6
 
+[runAnim]
+# The run clip's playback speed as you speed up (designer 2026-11-19: limbs must not move "really, really fast"):
+# it grows only `scale` as fast as your speed does, and never past `max` (was speed / base: 1.6x at the cap).
+scale = 0.5             # half as fast as the speed grows: 10% faster running = 5% faster legs
+max = 1.2               # never more than 1.2x the clip's normal speed
+
 [source]
-speed = "game rule: base above Roblox default 16 because auto-sprint; 20/34 -> 24/40 -> 27/45 on 2026-11-18 (designer: about 20% faster, then a bit more)"
+speed = "game rule: base above Roblox default 16 because auto-sprint; 20/34 -> 24/40 -> 27/45 on 2026-11-18 (designer: about 20% faster, then a bit more) -> 30/48 on 2026-11-19 (default run a bit slow)"
 gain = "game rule: starting values; maxRefresh added after playtest 2026-11-15 (slide spam held 31.5 forever); vault added 2026-11-17 (designer: vault keeps momentum); slideJump added 2026-11-17 (designer slide spec); slideCancel added 2026-11-18; slideCancel, vault and slideJump set to 0 the same day (designer: no speed boost from cancelling or vaulting)"
 jump = "game rule: starting values; coyote/buffer are common platformer defaults"
 slide = "game rule; minHip/clearance/gapMargin for the real slide (M2); designer slide spec 2026-11-17: burst 55 (60 from 2026-11-18, with the faster sprint) decaying over ~0.75 s, slope momentum, trigger above 16, cooldown 0.8, Space = jump-boost; jumpHeight = movement.jumpHeight; cancelAfter 2026-11-18 (slide cancel)"
@@ -101,3 +108,4 @@ wallRun = "game rule; minHeight tuned in playtest 2026-11-15; level hold (entryL
 wallJump = "game rule: starting values; allowBurst = 1 chosen by the designer 2026-11-15; push 24 -> 32 with the 27 sprint (2026-11-18)"
 landing = "game rule: rollMaxHeight = movement.toml maxSafeFall; safeHeight 12 -> 18 on 2026-11-18 (double-jump landings stopped you)"
 vaultChain = "designer 2026-11-18: from the 2nd vault within 2 s, +1.5 each, up to +6"
+runAnim = "designer 2026-11-19 picked: cap the run animation (about 1.2x at most)"

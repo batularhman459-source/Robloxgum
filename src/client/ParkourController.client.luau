@@ -16,6 +16,7 @@ local Parkour = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("P
 local SlideMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SlideMath"))
 local SlideFeel = require(script.Parent:WaitForChild("SlideFeel"))
 local FlipFeel = require(script.Parent:WaitForChild("FlipFeel"))
+local CameraKick = require(script.Parent:WaitForChild("CameraKick"))
 local SlideState = ReplicatedStorage:WaitForChild("SlideState") :: RemoteEvent -- src/server/SlideNet.server.luau
 local Sensors = require(script.Parent:WaitForChild("ParkourSensors"))
 local ParkourAnims = require(script.Parent:WaitForChild("ParkourAnims"))
@@ -207,6 +208,7 @@ local function onCharacter(char: Model)
 			if flip then
 				flip:play()
 			end
+			CameraKick.kick("flip")
 			SlideState:FireServer("flip") -- other players see the flip too
 			hrp.AssemblyLinearVelocity = Vector3.new(v.X, Parkour.jumpVelocity(m, p.jump.doubleJumpHeight), v.Z)
 			peakY = hrp.Position.Y
@@ -249,6 +251,7 @@ local function onCharacter(char: Model)
 				local fall = peakY - hrp.Position.Y
 				local rollTiming = if slidePressedAt then now - slidePressedAt else nil
 				local kind, speed = Parkour.landing(p, s, fall, rollTiming)
+				CameraKick.kick("land", CameraKick.landScale(fall)) -- a soft dip, stronger from higher up
 				if kind == "roll" then
 					Parkour.applyMove(p, s, "landRoll")
 					setMove("landRoll")
@@ -376,7 +379,7 @@ local function onCharacter(char: Model)
 		-- default run. It plays at 1x at the base speed and speeds up with momentum.
 		if grounded and moving and not low and now >= stunUntil then
 			anims:play("Run", 0.12)
-			anims:setSpeed("Run", s.speed / p.speed.base)
+			anims:setSpeed("Run", Parkour.runAnimSpeed(p, s.speed))
 		else
 			anims:stop("Run", 0.12)
 		end

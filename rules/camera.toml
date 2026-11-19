@@ -1,0 +1,41 @@
+# Camera kicks for the moves (src/client/CameraKick.luau), so they match the wall run's camera (tilt, FOV kick, shake)
+# without being as strong. Designer 2026-11-19: "more camera stuff so it fits the wall run", picked slide, vault,
+# double jump flip and landing, medium strength; then "tone it a bit down" (about a third less, 2026-11-19).
+# The slide's own kick is in slide.toml [kick] / [camera].
+# Each kick rises to its peak in `attack` seconds and settles to nothing by `time` (SlideMath.kick's curve).
+#   fov   = extra field of view at the peak (degrees)
+#   roll  = camera roll at the peak (degrees; its side is picked at random each time)
+#   dip   = camera drop at the peak (studs)
+#   shake = camera shake at the peak (studs)
+# For scale: the wall run tilts 20 degrees and its wall jump shakes hard (wallrun.toml [camera]).
+
+[vault]
+time = 0.32
+attack = 0.06
+fov = 3
+roll = 2
+dip = 0.15
+shake = 0.02
+
+[flip]
+time = 0.45
+attack = 0.08
+fov = 4
+roll = 3
+dip = 0
+shake = 0.02
+
+[land]
+time = 0.3
+attack = 0.04
+fov = 1
+roll = 0
+dip = 0.4
+shake = 0.06
+minFall = 6             # studs: smaller drops get no landing kick
+fullFall = 24           # studs: the kick is at full strength from this fall on
+
+[source]
+vault = "designer 2026-11-19 picked camera for the vault, medium, then toned down a third"
+flip = "designer 2026-11-19 picked camera for the double jump flip, medium, then toned down a third"
+land = "designer 2026-11-19 picked camera for landing, medium, then toned down a third"
