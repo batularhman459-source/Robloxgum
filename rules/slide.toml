@@ -158,7 +158,8 @@ scrapePitchMax = 1.2    # at full burst
 rollOff = 60            # studs: other players hear it this far away
 
 [net]
-maxPerSecond = 6        # slide + flip messages a player may send per second (a slide sends 2-3, a double jump 1)
+maxPerSecond = 10       # slide + flip + wall-run messages a player may send per second (a slide 2-3, a double jump
+                        # 1, a wall run 2); was 6 before wall runs replicated (2026-11-18)
 
 [source]
 pose = "designer slide spec 2026-11-17 (torso ~55 back, right leg straight forward, left tucked, trailing arm back), angles set against the reference clip and judged on the avatar"

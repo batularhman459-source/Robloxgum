@@ -1,0 +1,76 @@
+# The wall run: the "FREE R6 Wall Run" package by SKATER STUDIOS (designer 2026-11-19: "use this instead of yours"),
+# ported to src/client/WallRun. These are the package's own Config values, moved here (CLAUDE.md: numbers in rules/).
+# Controls (designer 2026-11-19): jump onto a wall and you stick to it; press jump to jump off; a run lasts up to
+# run.maxDuration, then you drop, and the next jump press lets you stick again (no cooldown).
+# Our changes: the run uses the momentum speed (ParkourSpeed), the field of view zoom is added on top of the speed
+# field of view (src/client/SpeedFeel.client.luau), the footstep is the designer's pick.
+
+[detect]
+distance = 4            # studs to look for a wall to each side
+rayForwardOffset = 1.25 # extra rays this far ahead of and behind the body
+maxWallNormalY = 0.35   # steeper than this is not a wall (floors, ramps)
+
+[run]
+fallbackSpeed = 30      # only used if the momentum speed is not known (the package's fixed WallRunSpeed)
+verticalSpeed = 0       # level: the run never rises or sinks (designer 2026-11-18: keep the players on one height)
+maxDuration = 2         # seconds a run lasts at most (designer 2026-11-19: "a cap, 2 seconds"; the package had none)
+snapDistance = 2        # studs the body is held off the wall
+maxSnapCorrection = 40
+snapKp = 14
+snapKi = 0
+snapKd = 3
+tangentSmoothTime = 0.08
+tangentSmoothMaxSpeed = 60
+correctionSmoothTime = 0.08
+correctionSmoothMaxSpeed = 200
+orientationResponsiveness = 35
+requireAirborne = 1     # 1 = must be in the air to start
+minStartHeight = 6      # studs above the ground to start
+groundCheckDistance = 3.5
+groundGraceTime = 0.2
+reattachCooldown = 0.25 # only stops re-sticking in the instant after leaving a wall (not a cooldown between runs)
+
+[jump]
+awayForce = 60          # wall jump: speed away from the wall
+upForce = 75            # ...upward
+forwardKeep = 0.5       # ...and this share of the run speed kept along the wall
+
+[camera]
+# Kept as the package made it (designer 2026-11-19 picked "as the package").
+tiltAngle = 20
+tiltSmoothTime = 0.12
+tiltMaxSpeed = 400
+jumpTiltImpulse = 150
+fovZoom = 5             # field of view narrows this much while running (added on top of the speed field of view)
+fovSmoothTime = 0.22
+fovMaxSpeed = 400
+fovJumpImpulse = 30
+shakeAmplitude = 1.6
+shakeFrequency = 0.09
+shakeFadeOutTime = 0.3
+shakePosition = [0.35, 0.35, 0.35]
+shakeRotation = [0.09, 0.09, 0.09]
+
+[animation]
+fadeTime = 0.15
+
+[trail]
+duration = 0.65         # seconds the limb trails burst after a wall jump
+groundGrace = 0.15
+
+[sound]
+# step: picked by the designer by ear 2026-11-19 from a quiet audition (replaces the package's wood step and then
+# Dirt_step_run_09, which was "too distracting, loud, overwhelming").
+stepId = 123224557798023 # Carpet_Footstep_4
+stepVolume = 0.14       # was 0.06 ("a bit quieter" than the audition), then "more noticeable" (designer 2026-11-19)
+stepPitchVariance = 0.05
+stepEvery = 2           # play a footstep on every 2nd Step marker: the clip marks 4 steps/s, the pick was heard at 2/s
+
+[source]
+detect = "FREE R6 Wall Run package (SKATER STUDIOS) Config"
+run = "FREE R6 Wall Run package Config; fallbackSpeed is its WallRunSpeed, the run uses our momentum speed; maxDuration 2 and stick-on-contact controls (designer 2026-11-19)"
+jump = "FREE R6 Wall Run package Config"
+camera = "FREE R6 Wall Run package Config, kept as is (designer 2026-11-19)"
+animation = "FREE R6 Wall Run package Config"
+trail = "FREE R6 Wall Run package Config"
+sound = "FREE R6 Wall Run package Config; step replaced by the designer's pick 2026-11-19; wall-jump sound removed the same day (designer: no swish laser sound), then the stick sound (designer: no sticky slimy sound)"

@@ -42,4 +42,36 @@ Clips.NormalVault = {
 }
 Clips.HighClimb = { import = "HighClimbAnimation.rbxm", sequence = "HighClimbAnimation", loop = false, priority = "Action" }
 
+-- The wall run (designer 2026-11-19: "use this instead of yours"): the "FREE R6 Wall Run" package by SKATER STUDIOS,
+-- its four KeyframeSequences extracted verbatim (Step markers kept), uploaded under this account 2026-11-19.
+-- Played by src/client/WallRun (the package's script, ported).
+Clips.WallRunLeft = {
+	import = "WallRunLeft.rbxm",
+	sequence = "WallRunLeft",
+	loop = true,
+	priority = "Action",
+	id = "rbxassetid://72452355877926",
+}
+Clips.WallRunRight = {
+	import = "WallRunRight.rbxm",
+	sequence = "WallRunRight",
+	loop = true,
+	priority = "Action",
+	id = "rbxassetid://80180683542825",
+}
+Clips.WallJumpLeft = {
+	import = "WallJumpLeft.rbxm",
+	sequence = "WallJumpLeft",
+	loop = false,
+	priority = "Action2",
+	id = "rbxassetid://86254189532011",
+}
+Clips.WallJumpRight = {
+	import = "WallJumpRight.rbxm",
+	sequence = "WallJumpRight",
+	loop = false,
+	priority = "Action2",
+	id = "rbxassetid://100555087718500",
+}
+
 return Clips

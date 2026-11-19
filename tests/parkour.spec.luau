@@ -30,6 +30,13 @@ return {
 			p.landing.safeHeight >= m.jumpHeight + p.jump.doubleJumpHeight + 2,
 			"your own jump + double jump never lands hard (designer 2026-11-18: double-jump landings stopped you)"
 		)
+		local w = t.rules("wallrun")
+		local wallJumpRise = w.jump.upForce ^ 2 / (2 * m.gravity)
+		t.ok(
+			-- worst case: latching at the top of a normal jump, the wall jump's full rise, then a double jump on top
+			p.landing.safeHeight >= m.jumpHeight + wallJumpRise + p.jump.doubleJumpHeight + 2,
+			"jump, wall run, wall jump, double jump never lands hard (2026-11-19: it stopped you)"
+		)
 		t.ok(p.wallJump.allowBurst == 0 or p.wallJump.allowBurst == 1, "allowBurst is a 0/1 switch")
 		t.ok(
 			p.gain.maxRefresh >= 1 and p.gain.maxRefresh == math.floor(p.gain.maxRefresh),
@@ -306,17 +313,27 @@ return {
 		t.ok(p.slide.height + p.slide.gapMargin < m.characterHeight, "a slide gap is lower than a standing body")
 	end,
 
+	["slide buffer: a slide pressed just before landing still happens, an early one does not"] = function(t)
+		local p = t.rules("parkour")
+		t.ok(Parkour.slideBuffered(p, 10, 10 + p.slide.bufferTime * 0.5), "pressed just before landing")
+		t.ok(not Parkour.slideBuffered(p, 10, 10 + p.slide.bufferTime + 0.01), "too early")
+		t.ok(not Parkour.slideBuffered(p, nil, 10), "not pressed")
+	end,
+
 	["landing: safe, rolled and hard"] = function(t)
 		local p, _, s = setup(t)
 		s.speed = 28
+		-- a fall between the safe height and the roll limit (from the rules, not a fixed 20: safeHeight moved
+		-- 12 -> 18 -> 24 -> 29)
+		local high = (p.landing.safeHeight + p.landing.rollMaxHeight) / 2
 		t.eq((Parkour.landing(p, s, p.landing.safeHeight, nil)), "soft")
-		local kind, speed = Parkour.landing(p, s, 20, p.landing.rollWindow * 0.5)
+		local kind, speed = Parkour.landing(p, s, high, p.landing.rollWindow * 0.5)
 		t.eq(kind, "roll")
 		t.ok(speed > 28, "a roll keeps and adds speed")
-		kind, speed = Parkour.landing(p, s, 20, nil)
+		kind, speed = Parkour.landing(p, s, high, nil)
 		t.eq(kind, "hard")
 		t.eq(speed, 28 * p.landing.hardSpeedFactor, "hard landing halves speed")
-		t.eq((Parkour.landing(p, s, 20, p.landing.rollWindow * 2)), "hard", "roll pressed too early")
+		t.eq((Parkour.landing(p, s, high, p.landing.rollWindow * 2)), "hard", "roll pressed too early")
 		t.eq((Parkour.landing(p, s, p.landing.rollMaxHeight + 5, 0.1)), "hard", "too high to roll")
 	end,
 }

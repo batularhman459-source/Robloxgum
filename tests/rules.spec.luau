@@ -61,6 +61,23 @@ return {
 		t.ok(#r.keys >= 2 and r.timing.blendIn > 0, "flip keys and timing")
 	end,
 
+	["wall run (FREE R6 Wall Run package): numbers sane, every section has a source"] = function(t)
+		local r = t.rules("wallrun")
+		t.ok(r.detect.distance > 0 and r.run.maxDuration > 0 and r.run.minStartHeight > 0, "detect, run, a cap")
+		t.ok(r.run.verticalSpeed == 0, "level (designer: keep the players on one height)")
+		t.ok(r.jump.awayForce > 0 and r.jump.upForce > 0, "wall jump")
+		t.ok(#r.camera.shakePosition == 3 and #r.camera.shakeRotation == 3, "shake vectors")
+		t.ok(r.sound.stepEvery >= 1 and r.sound.stepVolume > 0, "footsteps on, at least every marker")
+		for _, k in { "stepId" } do
+			t.ok(type(r.sound[k]) == "number" and r.sound[k] > 0, "sound." .. k)
+		end
+		for name in r do
+			if name ~= "source" then
+				t.ok(type(r.source[name]) == "string", "[" .. name .. "] needs a source entry")
+			end
+		end
+	end,
+
 	["character: widths in range, every one has a source"] = function(t)
 		local c = t.rules("character")
 		for _, k in { "torsoWidth", "armWidth", "legWidth", "headWidth" } do

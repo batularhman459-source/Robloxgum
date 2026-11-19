@@ -210,6 +210,11 @@ function Parkour.jumpVelocity(m: any, height: number): number
 	return math.sqrt(2 * m.gravity * height)
 end
 
+-- Is a slide pressed in the air (pressedAt) still waiting to happen on touchdown at `now`? (designer 2026-11-19)
+function Parkour.slideBuffered(p: any, pressedAt: number?, now: number): boolean
+	return pressedAt ~= nil and now - pressedAt >= 0 and now - pressedAt <= p.slide.bufferTime
+end
+
 function Parkour.canSlide(p: any, s: State): boolean
 	return s.grounded and s.speed >= p.slide.minSpeed and s.sinceSlide >= p.slide.cooldown
 end

@@ -40,7 +40,6 @@ local function onCharacter(char: Model)
 	local wasGrounded = true
 	local peakY = hrp.Position.Y
 	local wallSide = 0
-	local wallVy = 0
 	local stunUntil = 0
 	local slideUntil = 0
 	local slideDir = Vector3.zero
@@ -146,10 +145,20 @@ local function onCharacter(char: Model)
 	local function vaulting(): boolean
 		return char:GetAttribute("Vaulting") == true
 	end
+	-- The wall run package (src/client/WallRun) sets "WallRunSide" while it runs.
+	local function packageWallRun(): boolean
+		return char:GetAttribute("WallRunSide") ~= nil
+	end
 
 	local function onJump()
 		local now = os.clock()
-		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vaulting() then
+		if now - lastJumpAt < JUMP_DEBOUNCE or now < stunUntil or vaulting() or packageWallRun() then
+			return
+		end
+		-- The press that just jumped off a wall (the wall run package handles it) is not also a double jump: the
+		-- double jump stays free for the next press (designer 2026-11-19).
+		local wallJumpAt = char:GetAttribute("WallJumpAt")
+		if type(wallJumpAt) == "number" and now - wallJumpAt < JUMP_DEBOUNCE then
 			return
 		end
 		-- Space mid-slide: the slide jump, a jump out of the slide where there is room to stand up. No speed
@@ -228,7 +237,7 @@ local function onCharacter(char: Model)
 		s.sinceLeftWall += dt
 
 		-- The toolbox vault moves the body itself: leave speed, animation and moves alone until it is done.
-		if vaulting() then
+		if vaulting() or packageWallRun() then
 			anims:stop("Run", 0.1)
 			return
 		end
@@ -266,37 +275,9 @@ local function onCharacter(char: Model)
 
 		Parkour.decay(p, s, dt)
 
-		-- Wall run: keep going or end.
-		if s.wallRunning then
-			local wall = sensors:wall(wallSide)
-			if Parkour.wallRunEnds(p, s, wall, grounded) then
-				if wall then
-					s.lastWallId = wall.id
-				end
-				stopWallRun()
-			else
-				s.wallRunTime += dt
-				local look = if moving then moveDir else Sensors.flat(hrp.CFrame.LookVector)
-				local dir = Parkour.wallRunDirection({ x = look.X, z = look.Z }, wall.normal)
-				wallVy = math.max(wallVy - m.gravity * p.wallRun.gravityFactor * dt, -p.wallRun.maxSlideDownSpeed)
-				-- Hold the body at the wall: small pull towards it so it doesn't drift off.
-				local pull = -0.5
-				hrp.AssemblyLinearVelocity =
-					Vector3.new(dir.x * s.speed + wall.normal.x * pull, wallVy, dir.z * s.speed + wall.normal.z * pull)
-			end
-		elseif not grounded and moving then
-			local wall = sensors:anyWall()
-			local ok = Parkour.canWallRun(p, s, wall, { x = moveDir.X, z = moveDir.Z })
-			if ok and wall then
-				s.wallRunning, s.wallRunTime = true, 0
-				wallSide = wall.side
-				-- Keep a little of the jump's rise, never the whole launch (first playtest climbed over a 14 stud wall).
-				wallVy = math.clamp(hrp.AssemblyLinearVelocity.Y, 0, p.wallRun.entryUpSpeed)
-				Parkour.applyMove(p, s, "wallRun")
-				char:SetAttribute("ParkourWallRun", true)
-				setMove("wallRun")
-			end
-		end
+		-- The wall run is the "FREE R6 Wall Run" package (src/client/WallRun, designer 2026-11-19): hold Space near a
+		-- wall in the air. It moves the body itself; this controller only keeps the momentum (WallRunSide / WallJumps
+		-- attributes, below) and stays out of its way while it runs.
 
 		-- Ground moves: slide, bonk.
 		if grounded and now >= stunUntil then
@@ -340,14 +321,19 @@ local function onCharacter(char: Model)
 				setMove("bonk")
 			end
 		else
-			if slideRequested and logMoves then
+			-- Pressed just before landing: keep it, it slides on touchdown (designer 2026-11-19: after a wall jump and
+			-- a double jump you could not slide right when you landed; the press in the air was thrown away).
+			local buffered = not grounded and Parkour.slideBuffered(p, slidePressedAt, now)
+			if slideRequested and not buffered and logMoves then
 				print(
 					if grounded
 						then "[Parkour] slide refused (stunned after a hard landing)"
-						else "[Parkour] slide pressed in the air (counts as a roll press)"
+						else "[Parkour] slide pressed too early in the air (counts as a roll press)"
 				)
 			end
-			slideRequested = false
+			if not buffered then
+				slideRequested = false
+			end
 		end
 
 		-- Slide physics: burst, ease back to the sprint speed, slopes. Ends by SlideMath.done, or off an edge;
@@ -436,10 +422,33 @@ local function onCharacter(char: Model)
 		bufferedJumpAt = nil
 	end)
 
+	-- Momentum from the wall run package: a run and a wall jump count as moves, a run gives the double jump back,
+	-- and fall height counts from where you leave the wall.
+	local wallRunConn = char:GetAttributeChangedSignal("WallRunSide"):Connect(function()
+		local running = packageWallRun()
+		char:SetAttribute("ParkourWallRun", running)
+		peakY = hrp.Position.Y
+		if running then
+			s.airJumpsUsed = 0
+			Parkour.applyMove(p, s, "wallRun")
+			-- at once: the package reads it for its run speed, and this controller's Heartbeat pauses during the run
+			char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
+			setMove("wallRun")
+		end
+	end)
+	local wallJumpConn = char:GetAttributeChangedSignal("WallJumps"):Connect(function()
+		peakY = hrp.Position.Y
+		Parkour.applyMove(p, s, "wallJump")
+		char:SetAttribute("ParkourSpeed", math.floor(s.speed * 10 + 0.5) / 10)
+		setMove("wallJump")
+	end)
+
 	local function disconnectAll()
 		jumpConn:Disconnect()
 		stepConn:Disconnect()
 		vaultEndConn:Disconnect()
+		wallRunConn:Disconnect()
+		wallJumpConn:Disconnect()
 		if feel then
 			feel:destroy()
 		end
