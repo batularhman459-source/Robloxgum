@@ -1,3 +1,5 @@
+-- Test fixture only: the placeholder HUD (coins, shop, upgrades, rebirth, settings) we tried out, removed from the
+-- game 2026-11-19 (designer). Kept here because tests/ui.spec.luau uses it to prove the Depth Stack and scaling.
 -- Example HUD. A UI spec is plain data: no Roblox code.
 -- pos / size = {scaleX, offsetX, scaleY, offsetY} (like UDim2). anchor = {x, y}.
 -- kinds: panel, button (both get the Depth Stack), text, icon, group (invisible container).

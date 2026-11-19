@@ -29,11 +29,11 @@ local function rules(result): { [string]: boolean }
 end
 
 return {
-	["example Hud passes every check"] = function(t)
-		local spec = require("../ui/specs/Hud")
-		t.eq(#UiLayout.validate(spec, theme), 0, "Hud spec valid")
+	["sample HUD fixture passes every check"] = function(t)
+		local spec = require("./fixtures/SampleHud")
+		t.eq(#UiLayout.validate(spec, theme), 0, "SampleHud spec valid")
 		local result = UiCheck.run(spec, theme, {})
-		t.eq(#result.errors, 0, UiCheck.format("Hud", result))
+		t.eq(#result.errors, 0, UiCheck.format("SampleHud", result))
 	end,
 
 	["checker catches all 6 kinds of mistakes"] = function(t)
@@ -74,7 +74,7 @@ return {
 	end,
 
 	["scaled layout keeps edge margins and grows sizes"] = function(t)
-		local spec = require("../ui/specs/Hud")
+		local spec = require("./fixtures/SampleHud")
 		local _, phone = UiLayout.layout(spec, theme, 844, 390)
 		local _, fhd = UiLayout.layout(spec, theme, 1920, 1080)
 		local k = fhd[1].scale
@@ -94,7 +94,7 @@ return {
 	end,
 
 	["every outline in the built UI has the one theme thickness"] = function(t)
-		local gui = UiBuilder.build(require("../ui/specs/Hud"), theme, {}, ENV, UiLayout)
+		local gui = UiBuilder.build(require("./fixtures/SampleHud"), theme, {}, ENV, UiLayout)
 		local strokes = 0
 		for _, inst in gui:GetDescendants() do
 			if inst.ClassName == "UIStroke" then
@@ -106,7 +106,7 @@ return {
 	end,
 
 	["every panel and button gets the full depth stack"] = function(t)
-		local gui = UiBuilder.build(require("../ui/specs/Hud"), theme, {}, ENV, UiLayout)
+		local gui = UiBuilder.build(require("./fixtures/SampleHud"), theme, {}, ENV, UiLayout)
 		for _, name in { "CoinBar", "SettingsButton", "ShopButton", "UpgradesButton", "RebirthButton" } do
 			local c = gui:FindFirstChild(name, true)
 			t.ok(c ~= nil, name .. " missing")

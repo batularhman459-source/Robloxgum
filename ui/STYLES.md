@@ -28,7 +28,7 @@ Don't: ...
 ---
 
 ## House
-Source: our own default.       Theme: ui/themes/house.toml       Example spec: ui/specs/Hud.luau
+Source: our own default.       Theme: ui/themes/house.toml       Example spec: tests/fixtures/SampleHud.luau
 Feel: chunky, friendly, readable, toy-like.
 Palette roles: panel #222A4E, primary #FFBE28, success #28AA5A, danger #DC3C3C, accent #466EF0,
 text #FFFFFF, textDark #161828. Outline #111426, shadow #18204E (navy, blue-shifted).
