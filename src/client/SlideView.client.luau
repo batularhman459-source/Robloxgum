@@ -1,12 +1,13 @@
 --!strict
--- Draws OTHER players' slides (pose, wind trails, rock chips: SlideFeel) and double-jump flips (FlipFeel) on this
--- client. Their "Sliding"
+-- Draws OTHER players' slides (pose, wind trails, rock chips: SlideFeel), double-jump flips (FlipFeel) and wall-run
+-- footsteps and wall-jump trails (WallRun/Modules/View) on this client. Their "Sliding"
 -- attribute is set by the server (src/server/SlideNet.server.luau). This player's own slide is driven straight
 -- from ParkourController, with no network delay, so it is skipped here.
 local Players = game:GetService("Players")
 
 local SlideFeel = require(script.Parent:WaitForChild("SlideFeel"))
 local FlipFeel = require(script.Parent:WaitForChild("FlipFeel"))
+local WallRunView = require(script.Parent:WaitForChild("WallRun"):WaitForChild("Modules"):WaitForChild("View"))
 
 local function watch(char: Model)
 	local hum = char:WaitForChild("Humanoid", 10)
@@ -14,6 +15,7 @@ local function watch(char: Model)
 	if not (hum and hum:IsA("Humanoid") and hrp and hrp:IsA("BasePart")) then
 		return
 	end
+	task.spawn(WallRunView, char) -- their wall run's footsteps and wall-jump trails (src/client/WallRun/Modules/View)
 	local feel = SlideFeel.new(char, hum, hrp, false)
 	if not feel then
 		return

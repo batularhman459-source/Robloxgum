@@ -40,7 +40,6 @@ local function onCharacter(char: Model)
 
 	local wasGrounded = true
 	local peakY = hrp.Position.Y
-	local wallSide = 0
 	local stunUntil = 0
 	local slideUntil = 0
 	local slideDir = Vector3.zero
@@ -132,14 +131,6 @@ local function onCharacter(char: Model)
 		end
 	end
 
-	local function stopWallRun()
-		if s.wallRunning then
-			s.wallRunning = false
-			s.sinceLeftWall = 0
-		end
-		char:SetAttribute("ParkourWallRun", false)
-	end
-
 	-- The vault is the toolbox Vaulting System (src/client/Vault.client.luau): it sets the character's
 	-- "Vaulting" attribute while it runs. This controller stays out of its way meanwhile, and handles a jump
 	-- one step later so the vault script has seen the same press first.
@@ -186,23 +177,7 @@ local function onCharacter(char: Model)
 		end
 		lastJumpAt = now
 		local v = hrp.AssemblyLinearVelocity
-		if kind == "wallJump" then
-			local wall = sensors:wall(wallSide)
-			local normal = if wall
-				then wall.normal
-				else {
-					x = -sensors.flat(hrp.CFrame.RightVector).X * wallSide,
-					z = -sensors.flat(hrp.CFrame.RightVector).Z * wallSide,
-				}
-			local look = Sensors.flat(hrp.CFrame.LookVector)
-			local runDir = Parkour.wallRunDirection({ x = look.X, z = look.Z }, normal)
-			stopWallRun()
-			s.lastWallId = if wall then wall.id else s.lastWallId
-			Parkour.applyMove(p, s, "wallJump")
-			local h, up = Parkour.wallJumpVelocity(p, m, s, runDir, normal)
-			hrp.AssemblyLinearVelocity = Vector3.new(h.x, up, h.z)
-			setMove("wallJump")
-		elseif kind == "doubleJump" then
+		if kind == "doubleJump" then
 			s.airJumpsUsed += 1
 			Parkour.applyMove(p, s, "doubleJump")
 			if flip then
@@ -236,7 +211,6 @@ local function onCharacter(char: Model)
 		local moving = moveDir.Magnitude > 0.1
 
 		s.sinceSlide += dt
-		s.sinceLeftWall += dt
 
 		-- The toolbox vault moves the body itself: leave speed, animation and moves alone until it is done.
 		if vaulting() or packageWallRun() then
@@ -260,7 +234,6 @@ local function onCharacter(char: Model)
 					stunUntil = now + p.landing.hardStun
 					setMove("hardLanding")
 				end
-				stopWallRun()
 				if bufferedJumpAt and now - bufferedJumpAt <= p.jump.jumpBuffer then
 					hum.Jump = true
 				end

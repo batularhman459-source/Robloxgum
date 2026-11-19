@@ -12,9 +12,6 @@ local function airborne(s, height)
 	s.heightAboveGround = height or 6
 end
 
-local ALONG = { x = 1, z = 0 } -- running along +x
-local WALL_LEFT = { normal = { x = 0, z = 1 }, distance = 1.5, id = "W1" } -- wall at -z, normal points +z
-
 return {
 	["parkour numbers are in range and consistent"] = function(t)
 		local p, m = t.rules("parkour"), t.rules("movement")
@@ -23,7 +20,6 @@ return {
 		t.eq(p.landing.rollMaxHeight, m.maxSafeFall, "roll limit must match maxSafeFall")
 		t.ok(p.speed.bonkFactor > 0 and p.speed.bonkFactor < 1, "bonkFactor 0..1")
 		t.ok(p.gain.repeatFactor > 0 and p.gain.repeatFactor < 1, "repeatFactor 0..1")
-		t.ok(p.wallRun.minSpeed <= p.speed.base, "auto-sprint alone is fast enough to wall run")
 		t.ok(p.slide.height < m.characterHeight, "slide makes you smaller")
 		t.ok(p.landing.safeHeight < p.landing.rollMaxHeight, "safe < roll limit")
 		t.ok(
@@ -37,7 +33,6 @@ return {
 			p.landing.safeHeight >= m.jumpHeight + wallJumpRise + p.jump.doubleJumpHeight + 2,
 			"jump, wall run, wall jump, double jump never lands hard (2026-11-19: it stopped you)"
 		)
-		t.ok(p.wallJump.allowBurst == 0 or p.wallJump.allowBurst == 1, "allowBurst is a 0/1 switch")
 		t.ok(
 			p.gain.maxRefresh >= 1 and p.gain.maxRefresh == math.floor(p.gain.maxRefresh),
 			"maxRefresh whole number >= 1"
@@ -186,21 +181,7 @@ return {
 		t.eq(s.sinceLastMove, 0.5, "one more repeat does not")
 	end,
 
-	["wall jump burst: allowed with allowBurst = 1, clamped with 0"] = function(t)
-		local p, m, s = setup(t)
-		s.speed = p.speed.max
-		local h = Parkour.wallJumpVelocity(p, m, s, ALONG, WALL_LEFT.normal)
-		local burst = math.sqrt(h.x ^ 2 + h.z ^ 2)
-		t.eq(p.wallJump.allowBurst, 1, "designer chose burst on")
-		t.ok(burst > p.speed.max, "burst goes over the cap")
-		local strict = table.clone(p)
-		strict.wallJump = table.clone(p.wallJump)
-		strict.wallJump.allowBurst = 0
-		local c = Parkour.wallJumpVelocity(strict, m, s, ALONG, WALL_LEFT.normal)
-		t.ok(math.abs(math.sqrt(c.x ^ 2 + c.z ^ 2) - p.speed.max) < 1e-9, "clamped to exactly the cap")
-	end,
-
-	["jumps: ground, coyote, double, wall, and none left"] = function(t)
+	["jumps: ground, coyote, double, and none left"] = function(t)
 		local p, _, s = setup(t)
 		t.eq(Parkour.jumpKind(p, s), "jump")
 		s.grounded, s.timeSinceGrounded = false, p.jump.coyoteTime * 0.5
@@ -209,88 +190,6 @@ return {
 		t.eq(Parkour.jumpKind(p, s), "doubleJump")
 		s.airJumpsUsed = p.jump.airJumps
 		t.eq(Parkour.jumpKind(p, s), nil, "out of air jumps")
-		s.wallRunning = true
-		t.eq(Parkour.jumpKind(p, s), "wallJump", "wall jump always allowed while wall running")
-	end,
-
-	["wall run: starts along a close wall in the air"] = function(t)
-		local p, _, s = setup(t)
-		airborne(s)
-		local ok, why = Parkour.canWallRun(p, s, WALL_LEFT, ALONG)
-		t.ok(ok, "should start: " .. why)
-	end,
-
-	["wall run: refuses for every wrong condition"] = function(t)
-		local p, _, s = setup(t)
-		local cases = {
-			{
-				"grounded",
-				function(st)
-					st.grounded = true
-				end,
-				WALL_LEFT,
-				ALONG,
-			},
-			{ "no wall", nil, nil, ALONG },
-			{ "wall too far", nil, { normal = WALL_LEFT.normal, distance = 10, id = "W1" }, ALONG },
-			{
-				"too slow",
-				function(st)
-					st.speed = p.wallRun.minSpeed - 1
-				end,
-				WALL_LEFT,
-				ALONG,
-			},
-			{
-				"too low",
-				function(st)
-					st.heightAboveGround = 1
-				end,
-				WALL_LEFT,
-				ALONG,
-			},
-			{ "moving away", nil, WALL_LEFT, { x = 0, z = 1 } },
-			{ "angle too steep", nil, WALL_LEFT, { x = 0.3, z = -0.954 } },
-			{
-				"same wall",
-				function(st)
-					st.lastWallId, st.sinceLeftWall = "W1", 0.1
-				end,
-				WALL_LEFT,
-				ALONG,
-			},
-		}
-		for _, c in cases do
-			local st = Parkour.newState(p)
-			airborne(st)
-			if c[2] then
-				c[2](st)
-			end
-			local ok, why = Parkour.canWallRun(p, st, c[3], c[4])
-			t.ok(not ok and why == c[1], "expected '" .. c[1] .. "', got " .. tostring(ok) .. " / " .. why)
-		end
-		local _ = s
-	end,
-
-	["wall run: ends on time, ground or losing the wall; direction runs along the wall"] = function(t)
-		local p, _, s = setup(t)
-		airborne(s)
-		t.ok(not Parkour.wallRunEnds(p, s, WALL_LEFT, false), "keeps going")
-		s.wallRunTime = p.wallRun.maxDuration
-		t.ok(Parkour.wallRunEnds(p, s, WALL_LEFT, false), "time up")
-		s.wallRunTime = 0
-		t.ok(Parkour.wallRunEnds(p, s, nil, false), "wall gone")
-		t.ok(Parkour.wallRunEnds(p, s, WALL_LEFT, true), "touched ground")
-		local d = Parkour.wallRunDirection({ x = 0.8, z = -0.6 }, WALL_LEFT.normal)
-		t.ok(math.abs(d.z) < 1e-9 and math.abs(d.x - 1) < 1e-9, "into-wall part removed")
-	end,
-
-	["wall jump pushes away from the wall and keeps run speed"] = function(t)
-		local p, m, s = setup(t)
-		local h, up = Parkour.wallJumpVelocity(p, m, s, ALONG, WALL_LEFT.normal)
-		t.eq(h.x, s.speed, "keeps along-wall speed")
-		t.eq(h.z, p.wallJump.push, "pushed away from the wall")
-		t.ok(math.abs(up - math.sqrt(2 * m.gravity * p.wallJump.height)) < 1e-9, "up speed from height")
 	end,
 
 	["slide: needs ground, speed and cooldown"] = function(t)

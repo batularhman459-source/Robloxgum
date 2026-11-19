@@ -62,9 +62,10 @@ return {
 		end
 	end,
 
-	["vault: the high climb is off for now (designer 2026-11-18): nothing above the normal band vaults"] = function(t)
+	["vault: no high climb (designer 2026-11-19): only step and normal vaults, up to 3-4 studs"] = function(t)
 		local v = t.rules("vault")
-		t.ok(v.detect.maxHeight <= v.types.normalBelow, "no high band")
+		t.ok(v.types.normalBelow == nil and v.push.highForward == nil, "the high climb is gone")
+		t.ok(v.detect.maxHeight >= 3 and v.detect.maxHeight <= 4, "vaults top out at 3-4 studs")
 	end,
 
 	["vault: the obstacle turns solid only once the body is clear of it"] = function(t)

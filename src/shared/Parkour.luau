@@ -19,20 +19,11 @@ export type State = {
 	sinceAnyMove: number, -- seconds since any move at all (spammed repeats included)
 	sinceVault: number, -- seconds since the last vault ended
 	vaultChain: number, -- vaults in a row, each within vaultChain.window of the last
-	wallRunning: boolean,
-	wallRunTime: number,
 	sinceSlide: number,
 	heightAboveGround: number,
-	lastWallId: string?,
-	sinceLeftWall: number,
 }
 
-export type Wall = { normal: Vec2, distance: number, id: string }
 local Parkour = {}
-
-local function dot(a: Vec2, b: Vec2): number
-	return a.x * b.x + a.z * b.z
-end
 
 function Parkour.newState(p: any): State
 	return {
@@ -46,12 +37,8 @@ function Parkour.newState(p: any): State
 		sinceAnyMove = math.huge,
 		sinceVault = math.huge,
 		vaultChain = 0,
-		wallRunning = false,
-		wallRunTime = 0,
 		sinceSlide = math.huge,
 		heightAboveGround = 0,
-		lastWallId = nil,
-		sinceLeftWall = math.huge,
 	}
 end
 
@@ -127,12 +114,9 @@ function Parkour.bonk(p: any, s: State)
 	s.lastMove, s.repeatCount = nil, 0
 end
 
--- Which jump a jump press means right now: "jump", "wallJump", "doubleJump" or nil. (Vaulting is the toolbox
--- Vaulting System, src/client/Vault.client.luau, not this module.)
+-- Which jump a jump press means right now: "jump", "doubleJump" or nil. (Vaulting is the toolbox Vaulting System,
+-- src/client/Vault.client.luau, and the wall run and wall jump are the FREE R6 Wall Run package, src/client/WallRun.)
 function Parkour.jumpKind(p: any, s: State): string?
-	if s.wallRunning then
-		return "wallJump"
-	end
 	if s.grounded or s.timeSinceGrounded <= p.jump.coyoteTime then
 		return "jump"
 	end
@@ -140,69 +124,6 @@ function Parkour.jumpKind(p: any, s: State): string?
 		return "doubleJump"
 	end
 	return nil
-end
-
--- Can a wall run start against `wall`, moving in `dir` (unit)? Returns ok and a reason when not.
-function Parkour.canWallRun(p: any, s: State, wall: Wall?, dir: Vec2): (boolean, string)
-	local w = p.wallRun
-	if s.grounded then
-		return false, "grounded"
-	end
-	if not wall then
-		return false, "no wall"
-	end
-	if wall.distance > w.reach then
-		return false, "wall too far"
-	end
-	if s.speed < w.minSpeed then
-		return false, "too slow"
-	end
-	if s.heightAboveGround < w.minHeight then
-		return false, "too low"
-	end
-	if wall.id == s.lastWallId and s.sinceLeftWall < w.sameWallCooldown then
-		return false, "same wall"
-	end
-	-- Moving along the wall: the angle between run direction and the wall surface is small.
-	-- |dot(dir, normal)| = sin(angle). Moving away from the wall (dot > 0) never starts a run.
-	local d = dot(dir, wall.normal)
-	if d > 0.1 then
-		return false, "moving away"
-	end
-	if math.abs(d) > math.sin(math.rad(w.maxAngle)) then
-		return false, "angle too steep"
-	end
-	return true, "ok"
-end
-
--- Whether a wall run must end now.
-function Parkour.wallRunEnds(p: any, s: State, wall: Wall?, grounded: boolean): boolean
-	return grounded or not wall or wall.distance > p.wallRun.reach or s.wallRunTime >= p.wallRun.maxDuration
-end
-
--- Direction along the wall to run in: the move direction with the into-wall part removed.
-function Parkour.wallRunDirection(dir: Vec2, normal: Vec2): Vec2
-	local d = dot(dir, normal)
-	local x, z = dir.x - normal.x * d, dir.z - normal.z * d
-	local len = math.sqrt(x * x + z * z)
-	if len < 1e-6 then
-		return { x = -normal.z, z = normal.x }
-	end
-	return { x = x / len, z = z / len }
-end
-
--- Launch velocity of a wall jump: up by wallJump.height, away from the wall by wallJump.push,
--- keeping the along-wall run speed. With allowBurst = 0 the horizontal speed is clamped to
--- speed.max; with 1 it may briefly go over (a punchy burst). Returns horizontal {x, z} and up speed.
-function Parkour.wallJumpVelocity(p: any, m: any, s: State, runDir: Vec2, normal: Vec2): (Vec2, number)
-	local up = math.sqrt(2 * m.gravity * p.wallJump.height)
-	local x = runDir.x * s.speed + normal.x * p.wallJump.push
-	local z = runDir.z * s.speed + normal.z * p.wallJump.push
-	local len = math.sqrt(x * x + z * z)
-	if p.wallJump.allowBurst == 0 and len > p.speed.max then
-		x, z = x / len * p.speed.max, z / len * p.speed.max
-	end
-	return { x = x, z = z }, up
 end
 
 -- Vertical take-off speed for a jump of `height` studs.

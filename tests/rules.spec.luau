@@ -5,10 +5,7 @@ return {
 	["vault (toolbox Vaulting System): numbers in range, every section has a source"] = function(t)
 		local v = t.rules("vault")
 		t.ok(v.detect.minHeight < v.types.stepBelow, "a step vault is possible")
-		t.ok(
-			v.types.stepBelow < v.types.normalBelow and v.types.normalBelow <= v.detect.maxHeight,
-			"type bands in order"
-		)
+		t.ok(v.types.stepBelow < v.detect.maxHeight, "type bands in order")
 		t.ok(v.detect.facingDot > 0 and v.detect.facingDot <= 1, "facingDot 0..1")
 		t.ok(v.push.delay >= 0 and v.push.endEarly >= 0, "timings")
 		t.ok(

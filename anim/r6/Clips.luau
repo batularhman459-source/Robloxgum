@@ -25,7 +25,6 @@ Clips.Run = {
 -- designer 2026-11-17), dumped from Studio and rebuilt verbatim with tools/anim_from_json. Played by
 -- src/client/Vault.client.luau. Its own Animation ids belong to another account and would not load in
 -- this game once published, so Step and Normal were uploaded under this account on 2026-11-18 (ids below).
--- HighClimb is not uploaded: the high climb is off (rules/vault.toml maxHeight).
 Clips.StepVault = {
 	import = "StepVaultAnimation.rbxm",
 	sequence = "StepVaultAnimation",
@@ -40,7 +39,6 @@ Clips.NormalVault = {
 	priority = "Action",
 	id = "rbxassetid://80967627624275", -- uploaded 2026-11-18
 }
-Clips.HighClimb = { import = "HighClimbAnimation.rbxm", sequence = "HighClimbAnimation", loop = false, priority = "Action" }
 
 -- The wall run (designer 2026-11-19: "use this instead of yours"): the "FREE R6 Wall Run" package by SKATER STUDIOS,
 -- its four KeyframeSequences extracted verbatim (Step markers kept), uploaded under this account 2026-11-19.

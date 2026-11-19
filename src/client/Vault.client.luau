@@ -63,7 +63,6 @@ local function onCharacter(character: Model)
 	local VaultAnims: { [string]: AnimationTrack? } = {
 		STEP = loadClip("StepVault"),
 		NORMAL = loadClip("NormalVault"),
-		HIGH = loadClip("HighClimb"),
 	}
 
 	local function lockRotation()
@@ -136,10 +135,8 @@ local function onCharacter(character: Model)
 		if diff < v.detect.minHeight or diff > v.detect.maxHeight then
 			return
 		end
-		local vaultType = if diff < v.types.stepBelow
-			then "STEP"
-			elseif diff < v.types.normalBelow then "NORMAL"
-			else "HIGH"
+		-- Two kinds (the high climb was removed, designer 2026-11-19: "only vault up to 3-4 studs").
+		local vaultType = if diff < v.types.stepBelow then "STEP" else "NORMAL"
 		local anim = VaultAnims[vaultType]
 		if not anim then
 			return
@@ -180,10 +177,8 @@ local function onCharacter(character: Model)
 			local forward, up
 			if vaultType == "STEP" then
 				forward, up = p.stepForward, p.stepUp
-			elseif vaultType == "NORMAL" then
-				forward, up = p.normalForward, p.normalUp
 			else
-				forward, up = p.highForward, p.highUp
+				forward, up = p.normalForward, p.normalUp
 			end
 			peakSpeed = VaultMath.peakSpeed(forward, entrySpeed)
 			CameraKick.kick("vault") -- designer 2026-11-19: camera that fits the wall run

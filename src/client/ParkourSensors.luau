@@ -69,32 +69,6 @@ function Sensors.headroom(self: Sensors, limit: number?): number
 	return best
 end
 
--- Wall on one side (side = 1 right, -1 left), as {normal, distance from the body side, id}.
-function Sensors.wall(self: Sensors, side: number): any?
-	local right = flat(self.hrp.CFrame.RightVector)
-	local half = self.hrp.Size.X / 2
-	local hit = Workspace:Raycast(self.hrp.Position, right * side * (half + self.p.wallRun.reach), self.params)
-	if not hit or math.abs(hit.Normal.Y) > 0.3 then
-		return nil
-	end
-	local n = flat(hit.Normal)
-	return {
-		normal = { x = n.X, z = n.Z },
-		distance = hit.Distance - half,
-		id = hit.Instance:GetFullName(),
-		side = side,
-	}
-end
-
--- Best wall on either side, or nil.
-function Sensors.anyWall(self: Sensors): any?
-	local l, r = self:wall(-1), self:wall(1)
-	if l and r then
-		return if l.distance <= r.distance then l else r
-	end
-	return l or r
-end
-
 -- A wall straight ahead at chest height, close enough to run into.
 function Sensors.bonkWall(self: Sensors, dir: Vector3): boolean
 	local hit = Workspace:Raycast(self.hrp.Position, dir * (self.hrp.Size.Z / 2 + 0.8), self.params)
